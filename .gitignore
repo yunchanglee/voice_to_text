@@ -1,0 +1,20 @@
+*.iml
+.gradle
+/local.properties
+/.idea/
+.DS_Store
+/build
+*/build
+.kotlin
+.vscode
+
+# Built binaries
+*.apk
+*.aab
+
+# Scratch files
+step180.json
+loop.png
+screen_clean.png
+screen_test.png
+s_now.png

@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">VoiceToText</string>
+    <string name="notification_channel_name">음성 텍스트 변환</string>
+    <string name="notification_channel_desc">재생 중인 오디오를 실시간으로 텍스트로 변환 중인 상태를 표시합니다.</string>
+</resources>

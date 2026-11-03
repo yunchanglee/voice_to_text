@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>VoiceToText 디자인 시안 v2.2 (다국어 STT · 인앱 뷰어 · 로컬 저장)</title>
+<style>
+  :root{
+    --primary:#2563EB; --primary-c:#DBEAFE; --on-primary-c:#1E3A8A;
+    --sky:#0284C7; --sky-c:#E0F2FE; --on-sky-c:#0369A1;
+    --trans:#6366F1; --trans-c:#EEF2FF; --on-trans-c:#3730A3;
+    --live:#EF4444; --live-c:#FEE2E2;
+    --paused:#F59E0B; --paused-c:#FEF3C7;
+    --synced:#10B981; --synced-c:#D1FAE5;
+    --bg:#F8FAFC; --surface:#FFFFFF; --outline:#E2E8F0;
+    --t1:#0F172A; --t2:#64748B; --t3:#94A3B8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Pretendard","Noto Sans KR","Malgun Gothic",sans-serif;background:#E9EEF5;color:var(--t1);padding:40px 48px 60px}
+  .num{font-variant-numeric:tabular-nums}
+  h1.board{font-size:28px;font-weight:800;letter-spacing:-.5px}
+  .board-sub{color:var(--t2);font-size:14px;margin:6px 0 28px}
+  section.group{margin-bottom:56px}
+  section.group > h2{font-size:18px;font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:10px}
+  section.group > h2 span.tag{font-size:12px;font-weight:600;background:var(--t1);color:#fff;border-radius:6px;padding:3px 8px}
+  .row{display:flex;flex-wrap:wrap;gap:36px;align-items:flex-start}
+  .cap{font-size:13px;font-weight:700;margin-bottom:4px} .shot .cap{min-height:64px}
+  .cap small{display:block;font-weight:400;color:var(--t2);font-size:12px;margin-top:2px;max-width:360px;line-height:1.4}
+  .shot{display:flex;flex-direction:column;gap:8px}
+
+  /* ---------- device ---------- */
+  .phone{width:360px;height:800px;background:var(--bg);border-radius:28px;overflow:hidden;position:relative;
+         box-shadow:0 0 0 8px #111827,0 18px 40px rgba(15,23,42,.25);display:flex;flex-direction:column}
+  .phone.land{width:800px;height:360px;flex-direction:column}
+  .sb{height:28px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font-size:12px;font-weight:600;color:var(--t1)}
+  .sb .l{display:flex;align-items:center;gap:6px}
+  .sb .r{display:flex;align-items:center;gap:5px}
+  .sb svg{width:14px;height:14px}
+  .navbar{height:20px;flex:none;display:flex;justify-content:center;align-items:center}
+  .navbar i{width:108px;height:4px;border-radius:2px;background:#0F172A;opacity:.85}
+
+  svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  svg.f{fill:currentColor;stroke:none}
+
+  /* app bar */
+  .appbar{height:56px;flex:none;display:flex;align-items:center;padding:0 12px 0 16px;gap:10px}
+  .logo{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#2563EB,#7C3AED);display:grid;place-items:center;color:#fff}
+  .logo svg{width:18px;height:18px}
+  .appbar .title{font-size:19px;font-weight:800;letter-spacing:-.4px;flex:1}
+  .iconbtn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--t1);cursor:pointer}
+
+  /* language chip bar */
+  .langbar{display:flex;gap:6px;padding:0 16px 10px;overflow-x:auto;flex:none}
+  .lchip{height:30px;border-radius:999px;border:1px solid var(--outline);padding:0 12px;display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--t2);background:var(--surface);white-space:nowrap;flex:none;cursor:pointer}
+  .lchip.on{background:var(--primary-c);color:var(--on-primary-c);border-color:#93C5FD;font-weight:700}
+
+  .badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;border-radius:999px;padding:4px 10px 4px 8px;white-space:nowrap}
+  .badge svg{width:13px;height:13px}
+  .b-synced{background:var(--synced-c);color:#047857}
+  .b-sync{background:var(--primary-c);color:var(--on-primary-c)}
+  .b-off{background:var(--paused-c);color:#B45309}
+  .b-live{background:var(--live-c);color:#B91C1C}
+  .b-paused{background:var(--paused-c);color:#B45309}
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+  .dot.blink{animation:blink 1.2s infinite}
+  @keyframes blink{50%{opacity:.25}}
+
+  /* txt file icon */
+  .txtdoc{width:28px;height:34px;border-radius:5px;background:#0284C7;position:relative;flex:none;display:flex;flex-direction:column;justify-content:flex-end;padding:3px;color:#fff;font-size:8px;font-weight:900;text-align:center}
+  .txtdoc:before{content:"";position:absolute;left:5px;right:5px;top:6px;height:8px;background:repeating-linear-gradient(#fff 0 1.5px,transparent 1.5px 3.5px)}
+  .txtdoc span{background:#0369A1;border-radius:2px;font-size:7.5px;padding:1px 0;letter-spacing:-.2px}
+
+  /* doc strip */
+  .doc{margin:0 12px;background:var(--surface);border:1px solid var(--outline);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px;flex:none}
+  .doc .t{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .doc .p{font-size:11.5px;color:var(--t2);display:flex;align-items:center;gap:3px;margin-top:2px}
+  .doc .p svg{width:12px;height:12px}
+  .doc .m{flex:1;min-width:0}
+
+  /* transcript */
+  .script{flex:1;overflow:hidden;padding:14px 20px 0;position:relative}
+  .seg{margin-bottom:14px}
+  .ts{font-size:11.5px;font-weight:600;color:var(--t3);margin-bottom:3px}
+  .txt{font-size:15px;line-height:1.62;color:var(--t1)}
+  .seg.interim .txt{color:var(--t2)}
+  .seg.interim .ts{color:var(--live)}
+  .caret{display:inline-block;width:2px;height:17px;background:var(--live);vertical-align:-3px;margin-left:2px;animation:blink 1s steps(1) infinite}
+  .fade-top{position:absolute;left:0;right:0;top:0;height:28px;background:linear-gradient(var(--bg),transparent)}
+  .jump{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);background:var(--t1);color:#fff;font-size:12.5px;font-weight:600;padding:8px 14px;border-radius:999px;display:flex;gap:6px;align-items:center;box-shadow:0 6px 16px rgba(15,23,42,.25);cursor:pointer;z-index:5}
+  .jump svg{width:15px;height:15px}
+
+  /* control dock */
+  .dock{flex:none;background:var(--surface);border-top:1px solid var(--outline);border-radius:22px 22px 0 0;padding:14px 18px 14px}
+  .meter{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .wave{flex:1;height:34px;display:flex;align-items:center;gap:3px}
+  .wave i{flex:1;border-radius:2px;background:var(--live);opacity:.85}
+  .wave.paused i{background:var(--t3);opacity:.5}
+  .wave.idle i{background:var(--outline);opacity:1}
+  .timer{font-size:24px;font-weight:800;letter-spacing:.5px}
+  .timer.paused{color:var(--paused)}
+  .btns{display:flex;gap:10px}
+  .btn{height:50px;min-height:44px;border-radius:16px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .btn svg{width:20px;height:20px}
+  .btns .btn{flex:1 1 0}
+  .btn-tonal{background:#EEF2F7;color:var(--t1)}
+  .btn-danger{background:var(--live);color:#fff}
+  .btn-primary{background:var(--primary);color:#fff}
+  .btn-sky{background:var(--sky);color:#fff}
+  .btn-outline{border:1.5px solid var(--outline);color:var(--t1);background:var(--surface)}
+  .btn-start{height:64px;border-radius:20px;background:var(--live);color:#fff;font-size:17px;box-shadow:0 8px 20px rgba(239,68,68,.35)}
+  .btn-start .rec{width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px rgba(255,255,255,.35)}
+
+  /* bottom nav */
+  .bnav{height:68px;flex:none;background:var(--surface);display:flex;border-top:1px solid var(--outline)}
+  .bnav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:12px;font-weight:600;color:var(--t2);text-decoration:none}
+  .bnav a .pill{width:60px;height:30px;border-radius:999px;display:grid;place-items:center}
+  .bnav a.on{color:var(--t1)}
+  .bnav a.on .pill{background:var(--primary-c);color:var(--on-primary-c)}
+
+  /* idle */
+  .idle{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 32px}
+  .hero{width:132px;height:132px;border-radius:50%;background:radial-gradient(circle,#FFE4E4 0 45%,#FFF1F1 46% 70%,transparent 71%);display:grid;place-items:center;margin-bottom:18px;position:relative}
+  .hero .core{width:64px;height:64px;border-radius:50%;background:var(--live);display:grid;place-items:center;color:#fff;box-shadow:0 10px 24px rgba(239,68,68,.35)}
+  .hero .core svg{width:30px;height:30px}
+  .idle h3{font-size:20px;font-weight:800;letter-spacing:-.4px;margin-bottom:8px}
+  .idle p{font-size:13.5px;color:var(--t2);line-height:1.6}
+  .recent{margin:0 16px 14px;background:var(--surface);border:1px solid var(--outline);border-radius:14px;padding:12px;display:flex;gap:10px;align-items:center}
+  .recent .lb{font-size:11px;color:var(--t2);font-weight:600}
+  .recent .t{font-size:13px;font-weight:700;margin-top:1px}
+
+  /* onboarding */
+  .ob{flex:1;padding:24px 24px 0;display:flex;flex-direction:column}
+  .ob .step{font-size:12px;font-weight:700;color:var(--primary);margin-bottom:10px}
+  .ob h3{font-size:24px;font-weight:800;letter-spacing:-.6px;line-height:1.35;margin-bottom:10px}
+  .ob p.lead{font-size:14px;color:var(--t2);line-height:1.6;margin-bottom:22px}
+  .perm{display:flex;gap:14px;padding:14px;border-radius:16px;background:var(--surface);border:1px solid var(--outline);margin-bottom:10px;align-items:flex-start}
+  .perm .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:none}
+  .perm .ic svg{width:21px;height:21px}
+  .perm b{font-size:14.5px;display:block;margin-bottom:3px}
+  .perm span{font-size:12.5px;color:var(--t2);line-height:1.5}
+  .ob .foot{margin-top:auto;padding:16px 0 12px}
+
+  /* sheet & scrim */
+  .scrim{position:absolute;inset:0;background:rgba(15,23,42,.45);z-index:20}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-radius:26px 26px 0 0;padding:10px 20px 20px;z-index:25}
+  .grab{width:36px;height:4px;border-radius:2px;background:var(--outline);margin:0 auto 16px}
+  .sheet h4{font-size:18px;font-weight:800;margin-bottom:4px}
+  .sheet .sub{font-size:12.5px;color:var(--t2);margin-bottom:16px}
+  .card{background:var(--surface);border:1px solid var(--outline);border-radius:16px;padding:14px}
+  .linkbtn{color:var(--primary);font-weight:700;font-size:13px;display:inline-flex;gap:4px;align-items:center;cursor:pointer}
+  .linkbtn svg{width:14px;height:14px}
+
+  /* In-App Text Viewer Dialog Modal */
+  .modal-dialog-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px 14px;z-index:30}
+  .v-dialog{width:100%;height:100%;max-height:720px;background:#fff;border-radius:24px;box-shadow:0 24px 48px rgba(15,23,42,.35);display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--outline)}
+  .v-head{padding:16px 18px 12px;border-bottom:1px solid var(--outline);display:flex;align-items:center;justify-content:space-between;background:#FAFBFD}
+  .v-head .t{font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .v-head .tag{font-size:11px;font-weight:600;color:var(--t2);margin-top:3px;display:flex;gap:6px}
+  .v-body{flex:1;overflow-y:auto;padding:16px 18px;background:#FFFFFF}
+  .v-log{font-size:12px;color:var(--t3);font-family:monospace;margin-bottom:12px}
+  .v-txt{font-size:14.5px;line-height:1.7;color:var(--t1);margin-bottom:14px}
+  .v-foot{padding:12px 16px 12px;border-top:1px solid var(--outline);background:#FAFBFD;display:flex;flex-direction:column;gap:8px}
+  .v-btns{display:flex;gap:8px}
+  .v-btns .btn{height:44px;font-size:13.5px;border-radius:12px}
+  .v-inset-guide{text-align:center;font-size:10.5px;font-weight:600;color:var(--t3);padding:2px 0}
+
+  /* Delete Alert Dialog Modal */
+  .alert-box{width:290px;background:#fff;border-radius:20px;padding:22px;box-shadow:0 20px 40px rgba(0,0,0,.3);z-index:30}
+  .alert-box h5{font-size:17px;font-weight:800;margin-bottom:8px}
+  .alert-box p{font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:18px}
+  .alert-btns{display:flex;gap:8px;justify-content:flex-end}
+  .alert-btns .abtn{padding:9px 16px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer}
+  .alert-btns .abtn.c{background:#F1F5F9;color:var(--t1)}
+  .alert-btns .abtn.d{background:#FEE2E2;color:#B91C1C}
+
+  /* history & FlowRow */
+  .search-wrap{margin:4px 16px 10px;height:46px;border-radius:999px;background:#EEF2F7;display:flex;align-items:center;gap:10px;padding:0 16px;color:var(--t2);font-size:14px;flex:none}
+  .search-wrap .sin{flex:1;color:var(--t1);font-weight:600}
+  .search-wrap .clr{width:20px;height:20px;border-radius:50%;background:#CBD5E1;display:grid;place-items:center;color:#475569;font-size:11px;font-weight:800;cursor:pointer}
+  .chips{display:flex;gap:8px;padding:0 16px 10px;flex:none}
+  .fchip{height:32px;border-radius:10px;border:1px solid var(--outline);padding:0 12px;display:flex;align-items:center;font-size:12.5px;font-weight:600;color:var(--t2);background:var(--surface)}
+  .fchip.on{background:var(--primary-c);border-color:transparent;color:var(--on-primary-c)}
+  .list{flex:1;overflow:hidden;padding:0 12px}
+  .daylb{font-size:12px;font-weight:700;color:var(--t2);margin:10px 6px 8px}
+  .item{background:var(--surface);border:1px solid var(--outline);border-radius:16px;padding:12px;display:flex;gap:12px;margin-bottom:8px}
+  .item.sel{border:2px solid var(--primary);background:#F5F9FF}
+  .item .m{flex:1;min-width:0}
+  .item .headrow{display:flex;align-items:center;justify-content:space-between;gap:6px}
+  .item .t{font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item .pv{font-size:12.5px;color:var(--t2);line-height:1.5;margin:4px 0 8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  
+  /* FlowRow chips */
+  .flowchips{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+  .f-pill{font-size:11px;background:#EEF2F7;border-radius:6px;padding:2px 7px;font-weight:600;color:var(--t1);white-space:nowrap;display:inline-flex;align-items:center;gap:3px;flex:none}
+  .f-pill.sky{background:#E0F2FE;color:#0369A1}
+  .f-pill.green{background:#D1FAE5;color:#047857}
+  .status-row{margin-top:6px;display:flex;align-items:center;justify-content:space-between}
+
+  /* detail */
+  .dhead{padding:4px 20px 10px;flex:none}
+  .dhead h3{font-size:18px;font-weight:800;letter-spacing:-.3px;margin-bottom:6px}
+  .dmeta{display:flex;flex-wrap:wrap;gap:6px}
+  .actbar{display:flex;gap:8px;padding:0 20px 12px;flex:none}
+  .actbar .a{height:38px;border-radius:10px;border:1px solid var(--outline);background:var(--surface);display:flex;align-items:center;gap:6px;padding:0 14px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .actbar .a svg{width:16px;height:16px}
+  .actbar .a.sky{background:var(--sky);color:#fff;border-color:transparent}
+  .actbar .a.blue{background:var(--primary);color:#fff;border-color:transparent}
+
+  /* notification shade */
+  .shade{flex:1;background:#1E293B;color:#E2E8F0;padding:8px 12px;display:flex;flex-direction:column}
+  .qs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0 16px}
+  .qs i{height:56px;border-radius:18px;background:#334155}
+  .qs i.on{background:#93C5FD}
+  .noti{background:#F1F5F9;color:var(--t1);border-radius:24px;padding:14px 16px;margin-bottom:8px}
+  .noti .h{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--t2)}
+  .noti .h .ap{width:18px;height:18px;border-radius:50%;background:var(--live);display:grid;place-items:center;color:#fff}
+  .noti .h .ap svg{width:11px;height:11px}
+  .noti .h .ap.p{background:var(--paused)}
+  .noti b{display:block;font-size:14.5px;margin:8px 0 3px}
+  .noti .b{font-size:13px;color:#334155;line-height:1.45}
+  .noti .d{font-size:11.5px;color:var(--t2);margin-top:4px}
+  .noti .acts{display:flex;gap:8px;margin-top:12px}
+  .noti .acts span{flex:1;height:38px;border-radius:999px;background:#E2E8F0;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:700}
+  .noti .acts span svg{width:16px;height:16px}
+  .noti .acts span.stop{background:#FEE2E2;color:#B91C1C}
+  .noti .acts span.go{background:var(--primary-c);color:var(--on-primary-c)}
+  .shade .sb{color:#F8FAFC;padding:0 6px}
+  .sys-chip{background:#22C55E;color:#052e16;border-radius:999px;padding:1px 7px;font-size:10.5px;font-weight:700}
+
+  /* landscape */
+  .land .body{flex:1;display:flex;min-height:0}
+  .rail{width:76px;flex:none;background:var(--surface);border-right:1px solid var(--outline);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:14px}
+  .rail a{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--t2);text-decoration:none}
+  .rail a .pill{width:52px;height:30px;border-radius:999px;display:grid;place-items:center}
+  .rail a.on{color:var(--t1)}
+  .rail a.on .pill{background:var(--primary-c);color:var(--on-primary-c)}
+  .rail .sp{flex:1}
+  .lpanel{width:270px;flex:none;padding:12px 14px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--outline);background:var(--surface)}
+  .lpanel .doc{margin:0;padding:8px 10px}
+  .lpanel .meter{flex-direction:column;align-items:stretch;gap:2px;margin:0}
+  .lpanel .timer{font-size:30px;text-align:center}
+  .lpanel .btns{flex-direction:row;gap:8px;margin-top:auto}
+  .lpanel .btns .btn{height:42px;flex:1 1 0;font-size:13.5px;border-radius:12px}
+  .rpanel{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
+  .rpanel .script{padding:12px 24px 0}
+  .rhead{height:44px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 20px 0 24px;border-bottom:1px solid var(--outline);font-size:13px;font-weight:700}
+  .land .sb{height:24px;font-size:11px;padding:0 24px;background:#F1F5F9;border-bottom:1px solid var(--outline)}
+  .land .navbar{display:none}
+
+  /* translation 3-way tab & bilingual */
+  .btn-trans{background:var(--trans);color:#fff}
+  .tab-3way{display:flex;background:#EEF2F7;border-radius:12px;padding:3px;gap:4px;margin:4px 16px 10px;flex:none}
+  .tab-3way .t-btn{flex:1;text-align:center;font-size:11.5px;font-weight:700;padding:6px 0;border-radius:9px;color:var(--t2);cursor:pointer;white-space:nowrap}
+  .tab-3way .t-btn.on{background:#fff;color:var(--trans);box-shadow:0 2px 6px rgba(0,0,0,.08)}
+  .sub-card{background:#EEF2FF;border:1px solid #C7D2FE;border-radius:10px;padding:8px 10px;margin-top:6px;font-size:13.5px;color:#3730A3;line-height:1.5;font-weight:600;display:flex;gap:6px;align-items:flex-start}
+  .bilingual-card{background:var(--surface);border:1px solid var(--outline);border-radius:14px;padding:12px;margin-bottom:10px}
+  .bilingual-card .s-txt{font-size:13.5px;color:var(--t1);line-height:1.55;margin-bottom:8px}
+  .bilingual-card .t-txt{font-size:13.5px;color:#3730A3;background:#EEF2FF;border-radius:8px;padding:8px 10px;line-height:1.55}
+
+  /* tokens */
+  .tok{display:grid;grid-template-columns:repeat(4,200px);gap:14px}
+  .sw{border-radius:14px;overflow:hidden;background:var(--surface);border:1px solid var(--outline)}
+  .sw .c{height:64px}
+  .sw .l{padding:8px 10px;font-size:12px}
+  .sw .l b{display:block;font-size:12.5px}
+  .sw .l span{color:var(--t2)}
+  .panel{background:var(--surface);border-radius:20px;padding:22px;border:1px solid var(--outline)}
+  .iconspec{display:flex;gap:28px;align-items:flex-end}
+  .ib{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:12px;color:var(--t2)}
+  .ib .box{width:96px;height:96px;border-radius:12px;background:#0F172A;display:grid;place-items:center;
+     background-image:linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px);background-size:4px 4px}
+  .ib .box svg{width:80px;height:80px;color:#fff}
+</style>
+</head>
+<body>
+
+<!-- ============ SVG ICONS ============ -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
+    <symbol id="wavemic" viewBox="0 0 24 24"><path d="M3 10v4M6.5 7v10M10 4v16M13.5 8v8M17 6v12M20.5 10v4"/></symbol>
+    <symbol id="pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></symbol>
+    <symbol id="play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></symbol>
+    <symbol id="stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
+    <symbol id="folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+    <symbol id="file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></symbol>
+    <symbol id="check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></symbol>
+    <symbol id="ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+    <symbol id="down" viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></symbol>
+    <symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
+    <symbol id="trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+    <symbol id="back" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol>
+    <symbol id="copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
+    <symbol id="share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></symbol>
+    <symbol id="bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"/></symbol>
+    <symbol id="shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+    <symbol id="history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2"/></symbol>
+    <symbol id="wifi" viewBox="0 0 24 24"><path d="M2 8.5a15 15 0 0 1 20 0L12 21z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="bat" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="19" rx="2" fill="currentColor" stroke="none"/><rect x="9" y="1" width="6" height="2" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="close" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+    <!-- status bar icons -->
+    <symbol id="st-rec" viewBox="0 0 24 24"><rect x="8" y="2.5" width="8" height="12" rx="4" fill="currentColor"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M1.8 8.5v5M22.2 8.5v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="st-pause" viewBox="0 0 24 24"><rect x="5" y="2.5" width="7" height="11" rx="3.5" fill="currentColor"/><path d="M2.5 10a6 6 0 0 0 10 4.4M8.5 16.5v4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><rect x="15" y="12" width="2.6" height="9" rx="1" fill="currentColor"/><rect x="19.4" y="12" width="2.6" height="9" rx="1" fill="currentColor"/></symbol>
+  </defs>
+</svg>
+
+<h1 class="board">VoiceToText — 디자인 시안 v2.2 (다국어 STT · 인앱 뷰어 · 로컬 저장)</h1>
+<p class="board-sub">기기 내부 저장소(Documents/VoiceToText) 전용 · Material 3 반응형 · 2026-11-02 · 기획서 v2.2 기준</p>
+
+<!-- ======================================================= -->
+<section class="group" id="g-flow">
+<h2><span class="tag">A</span>실시간 변환 흐름 & 인앱 텍스트 뷰어 (세로모드)</h2>
+<div class="row">
+
+  <!-- A1 onboarding -->
+  <div class="shot">
+    <div class="cap">A-1 권한 안내 온보딩<small>복잡한 Google 로그인 없이 필수 오디오/알림 권한 허용 후 0초 만에 시작합니다.</small></div>
+    <div class="phone">
+      <div class="sb"><div class="l num">14:35</div><div class="r"><svg class="i"><use href="#wifi"/></svg><svg class="i"><use href="#bat"/></svg></div></div>
+      <div class="ob">
+        <div class="step">시작하기</div>
+        <h3>스마트폰 재생 소리를<br>텍스트 파일로<br>안전하게 저장해요</h3>
+        <p class="lead">외부 서버로 소리를 보내지 않아요.<br><b>100% 내 폰 안에서만</b> 텍스트로 변환됩니다.</p>
+        <div class="perm"><div class="ic" style="background:var(--live-c);color:var(--live)"><svg class="i"><use href="#mic"/></svg></div><div><b>오디오 캡처</b><span>재생 중인 미디어 소리를 듣기 위해 필요해요. 마이크 외부 소음은 녹음하지 않아요.</span></div></div>
+        <div class="perm"><div class="ic" style="background:var(--primary-c);color:var(--primary)"><svg class="i"><use href="#bell"/></svg></div><div><b>알림</b><span>백그라운드에서 실행될 때 상태바와 알림창으로 실시간 제어할 수 있어요.</span></div></div>
+        <div class="perm"><div class="ic" style="background:var(--synced-c);color:#047857"><svg class="i"><use href="#folder"/></svg></div><div><b>문서 폴더 저장</b><span>기기 내 'Documents/VoiceToText' 폴더에 .txt 파일로 자동 보관돼요.</span></div></div>
+        <div class="foot">
+          <div class="btn btn-primary">권한 허용하고 바로 시작</div>
+        </div>
+      </div>
+      <div class="navbar"><i></i></div>
+    </div>
+  </div>
+
+  <!-- A2 idle -->
+  <div class="shot">
+    <div class="cap">A-2 실시간 변환 · 대기 (IDLE)<small>다국어 선택 칩 바(자동/한국어/영어/일본어) + 단축 파일명 + [변환 시작] CTA.</small></div>
+    <div class="phone">
+      <div class="sb"><div class="l num">14:36</div><div class="r"><svg class="i"><use href="#wifi"/></svg><svg class="i"><use href="#bat"/></svg></div></div>
+      <div class="appbar"><div class="logo"><svg class="i"><use href="#wavemic"/></svg></div><div class="title">VoiceToText</div><div class="iconbtn"><svg class="i"><use href="#folder"/></svg></div></div>
+      <div class="langbar">
+        <div class="lchip">🌐 자동 감지</div>
+        <div class="lchip on">🇰🇷 한국어</div>
+        <div class="lchip">🇺🇸 English</div>
+        <div class="lchip">🇯🇵 日本語</div>
+      </div>
+      <div class="idle">
+        <div class="hero"><div class="core"><svg class="i"><use href="#mic"/></svg></div></div>
+        <h3>재생 중인 소리를<br>텍스트로 바꿔보세요</h3>
+        <p>유튜브, 인강, 팟캐스트를 재생한 뒤<br>아래 버튼을 누르면 실시간으로 받아 적어요.</p>
+        <div style="margin-top:16px" class="badge b-synced"><svg class="i"><use href="#check"/></svg>다국어 온디바이스 음성인식 준비됨</div>
+      </div>
+      <div class="recent"><div class="txtdoc"><span>TXT</span></div><div style="flex:1"><div class="lb">최근 저장된 파일</div><div class="t">VTT_261102_1328.txt</div></div><svg class="i" style="color:var(--t3)"><use href="#ext"/></svg></div>
+      <div class="dock" style="border-radius:22px 22px 0 0">
+        <div class="btn btn-start"><span class="rec"></span>변환 시작</div>
+        <div style="text-align:center;font-size:11.5px;color:var(--t2);margin-top:10px;display:flex;gap:4px;justify-content:center;align-items:center"><svg class="i" style="width:13px;height:13px"><use href="#folder"/></svg>내 파일 › 문서 › VoiceToText 에 자동 저장</div>
+      </div>
+      <div class="bnav"><a class="on"><span class="pill"><svg class="i"><use href="#mic"/></svg></span>실시간</a><a><span class="pill"><svg class="i"><use href="#history"/></svg></span>변환 기록</a></div>
+      <div class="navbar" style="background:var(--surface)"><i></i></div>
+    </div>
+  </div>
+
+  <!-- A3 recording -->
+  <div class="shot">
+    <div class="cap">A-3 실시간 변환 중 (RECORDING)<small>단축 파일명(VTT_YYMMDD_HHmm.txt). 자동 번역에 최적화된 순수 텍스트 실시간 렌더링.</small></div>
+    <div class="phone">
+      <div class="sb"><div class="l num">14:37 <svg class="i" style="color:var(--t1)"><use href="#st-rec"/></svg></div><div class="r"><span class="sys-chip">●</span><svg class="i"><use href="#wifi"/></svg><svg class="i"><use href="#bat"/></svg></div></div>
+      <div class="appbar"><div class="logo"><svg class="i"><use href="#wavemic"/></svg></div><div class="title">VoiceToText</div><span class="badge b-live"><span class="dot blink"></span>LIVE</span><div class="iconbtn"><svg class="i"><use href="#folder"/></svg></div></div>
+      <div class="doc"><div class="txtdoc"><span>TXT</span></div><div class="m"><div class="t">VTT_261102_1437.txt</div><div class="p"><svg class="i"><use href="#folder"/></svg>내 파일 › 문서 › VoiceToText</div></div><span class="badge b-sync"><svg class="i"><use href="#save"/></svg>저장 중</span></div>
+      <div class="script">
+        <div class="fade-top"></div>
+        <div class="seg"><div class="txt">크레이그는 바버라와 눈을 맞췄다 그는 윙크했다 그녀는 하지 않았다 심지어 웃지도 않았다 그의 오래된 선물 상자에는 낡은 편지와 흑백 사진들이 가지런히 정돈되어 있었다.</div></div>
+        <div class="seg"><div class="txt">남편에게 달려갔고 그 남자는 일을 하나 끝내고 바위를 하기 전에 차고에서 맥주를 한잔하고 있었다 키가 195cm가 넘는 대형 트럭 운전기사인 남편은 조용히 아내의 말을 경청했다.</div></div>
+        <div class="seg interim"><div class="txt">이와 같이 로컬 저장 방식을 사용하면 인증 과정이 전혀 필요 없고 완벽한 오프라인 환경에서도<span class="caret"></span></div></div>
+      </div>
+      <div class="dock">
+        <div class="meter">
+          <div class="wave" id="w1"></div>
+          <div class="timer num">00:01:04</div>
+        </div>
+        <div class="btns"><div class="btn btn-tonal"><svg class="i f"><use href="#pause"/></svg>일시중지</div><div class="btn btn-danger"><svg class="i f"><use href="#stop"/></svg>종료</div></div>
+      </div>
+      <div class="bnav"><a class="on"><span class="pill"><svg class="i"><use href="#mic"/></svg></span>실시간</a><a><span class="pill"><svg class="i"><use href="#history"/></svg></span>변환 기록</a></div>
+      <div class="navbar" style="background:var(--surface)"><i></i></div>
+    </div>
+  </div>
+
+  <!-- A4 paused -->
+  <div class="shot">
+    <div class="cap">A-4 일시중지 & 실시간 위치로 점프<small>주황색 배지 전환. 스크롤 시 화면 하단에 [실시간 위치로 ⬇] 플로팅 알약 노출.</small></div>
+    <div class="phone">
+      <div class="sb"><div class="l num">14:38 <svg class="i"><use href="#st-pause"/></svg></div><div class="r"><span class="sys-chip">●</span><svg class="i"><use href="#wifi"/></svg><svg class="i"><use href="#bat"/></svg></div></div>
+      <div class="appbar"><div class="logo"><svg class="i"><use href="#wavemic"/></svg></div><div class="title">VoiceToText</div><span class="badge b-paused"><svg class="i f"><use href="#pause"/></svg>일시중지됨</span><div class="iconbtn"><svg class="i"><use href="#folder"/></svg></div></div>
+      <div class="doc"><div class="txtdoc"><span>TXT</span></div><div class="m"><div class="t">VTT_261102_1437.txt</div><div class="p"><svg class="i"><use href="#folder"/></svg>내 파일 › 문서 › VoiceToText</div></div><span class="badge b-paused"><svg class="i f"><use href="#pause"/></svg>대기</span></div>
+      <div class="script">
+        <div class="seg"><div class="txt">크레이그는 바버라와 눈을 맞췄다 그는 윙크했다 그녀는 하지 않았다 심지어 웃지도 않았다 그의 오래된 선물 상자에는 낡은 편지와 흑백 사진들이 가지런히 정돈되어 있었다.</div></div>
+        <div class="seg"><div class="txt">남편에게 달려갔고 그 남자는 일을 하나 끝내고 바위를 하기 전에 차고에서 맥주를 한잔하고 있었다 키가 195cm가 넘는 대형 트럭 운전기사인 남편은 조용히 아내의 말을 경청했다.</div></div>
+        <div class="jump"><svg class="i"><use href="#down"/></svg>실시간 위치로</div>
+      </div>
+      <div class="dock">
+        <div class="meter">
+          <div class="wave paused" id="w2"></div>
+          <div class="timer paused num">00:01:04</div>
+        </div>
+        <div class="btns"><div class="btn btn-primary"><svg class="i f"><use href="#play"/></svg>재실행</div><div class="btn btn-danger"><svg class="i f"><use href="#stop"/></svg>종료</div></div>
+      </div>
+      <div class="bnav"><a class="on"><span class="pill"><svg class="i"><use href="#mic"/></svg></span>실시간</a><a><span class="pill"><svg class="i"><use href="#history"/></svg></span>변환 기록</a></div>
+      <div class="navbar" style="background:var(--surface)"><i></i></div>
+    </div>
+  </div>
+
+  <!-- A5 completed -->
+  <div class="shot">
+    <div class="cap">A-5 변환 완료 · 표준 컬러 액션<small>하늘색 [텍스트 열기] + 파란색 [공유하기] + 아웃라인 [전체 복사] 표준화.</small></div>
+    <div class="phone">
+      <div class="sb"><div class="l num">14:39</div><div class="r"><svg class="i"><use href="#wifi"/></svg><svg class="i"><use href="#bat"/></svg></div></div>
+      <div class="appbar"><div class="logo"><svg class="i"><use href="#wavemic"/></svg></div><div class="title">VoiceToText</div><div class="iconbtn"><svg class="i"><use href="#folder"/></svg></div></div>
+      <div class="idle" style="padding:0 20px">
+        <div class="hero" style="background:radial-gradient(circle,#D1FAE5 0 45%,#ECFDF5 46% 70%,transparent 71%)"><div class="core" style="background:var(--synced);box-shadow:0 10px 24px rgba(16,185,129,.35)"><svg class="i"><use href="#check"/></svg></div></div>
+        <h3>로컬에 안전하게 저장했어요</h3>
+        <p>내 파일 › 문서 › VoiceToText</p>
+        <div class="card" style="width:100%;margin-top:18px;text-align:left">
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px"><div class="txtdoc"><span>TXT</span></div><div><div style="font-weight:800;font-size:14px">VTT_261102_1437.txt</div><div style="font-size:11.5px;color:var(--t2);margin-top:2px">🇰🇷 한국어 · 1002 B</div></div></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;text-align:center;border-top:1px solid var(--outline);padding-top:12px">
+            <div><div class="num" style="font-weight:800;font-size:17px">01:04</div><div style="font-size:11px;color:var(--t2)">소요 시간</div></div>
+            <div><div class="num" style="font-weight:800;font-size:17px">3</div><div style="font-size:11px;color:var(--t2)">문단</div></div>
+            <div><div class="num" style="font-weight:800;font-size:17px">284</div><div style="font-size:11px;color:var(--t2)">글자</div></div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:0 18px 16px;display:flex;flex-direction:column;gap:10px">
+        <div class="btn btn-sky"><svg class="i"><use href="#file"/></svg>텍스트 열기</div>
+        <div style="display:flex;gap:10px">
+          <div class="btn btn-outline" style="flex:1"><svg class="i"><use href="#copy"/></svg>전체 복사</div>
+          <div class="btn btn-primary" style="flex:1"><svg class="i"><use href="#share"/></svg>공유하기</div>
+        </div>
+        <div class="btn btn-outline" style="border:none;background:#EEF2F7"><svg class="i"><use href="#mic"/></svg>새 변환 시작</div>
+      </div>
+      <div class="bnav"><a class="on"><span class="pill"><svg class="i"><use href="#mic"/></svg></span>실시간</a><a><span class="pill"><svg class="i"><use href="#history"/></svg></span>변환 기록</a></div>
+      <div class="navbar" style="background:var(--surface)"><i></i></div>
+    </div>
+  </div>
+
+  <!-- A6 in-app viewer dialog -->
+  <div class="shot">
+    <div class="cap">A-6 인앱 텍스트 뷰어 다이얼로그<small>외부 앱 없이 즉시 팝업으로 파일 전문 열람. 하단 네비게이션 Safe Inset 대응 완료.</small></div>
+    <div class="phone">
+      <div class="sb"><div class="l num">14:40</div><div class="r"><svg class="i"><use href="#wifi"/></svg><svg class="i"><use href="#bat"/></svg></div></div>
+      <div class="appbar"><div class="logo"><svg class="i"><use href="#wavemic"/></svg></div><div class="title">VoiceToText</div></div>
+      <div class="scrim"></div>
+      <div class="modal-dialog-wrap">
+        <div class="v-dialog">
+          <div class="v-head">
+            <div>
+              <div class="t">VTT_261102_1437.txt</div>
+              <div class="tag"><span>🇰🇷 한국어</span><span>·</span><span class="num">1002 B</span><span>·</span><span>내 파일 › 문서</span></div>
+            </div>
+            <div class="iconbtn" style="width:32px;height:32px"><svg class="i"><use href="#close"/></svg></div>
+          </div>
+          <div class="v-body">
+            <div class="v-log">[변환 시작: 2026-11-02 14:37:12 | 언어: 한국어]</div>
+            <div class="v-txt">크레이그는 바버라와 눈을 맞췄다 그는 윙크했다 그녀는 하지 않았다 심지어 웃지도 않았다 그의 오래된 선물 상자에는 낡은 편지와 흑백 사진들이 가지런히 정돈되어 있었다.</div>
+            <div class="v-txt">남편에게 달려갔고 그 남자는 일을 하나 끝내고 바위를 하기 전에 차고에서 맥주를 한잔하고 있었다 키가 195cm가 넘는 대형 트럭 운전기사인 남편은 조용히 아내의 말을 경청했다.</div>
+            <div class="v-txt">이와 같이 로컬 저장 방식을 사용하면 인증 과정이 전혀 필요 없고 완벽한 오프라인 환경에서도 안전하게 음성이 텍스트로 보존됩니다.</div>
+            <div class="v-log">[변환 종료: 소요 시간 01:04]</div>
+          </div>
+          <div class="v-foot">
+            <div class="v-btns">
+              <div class="btn btn-outline" style="flex:1"><svg class="i"><use href="#copy"/></svg>복사</div>
+              <div class="btn btn-primary" style="flex:1.2"><svg class="i"><use href="#share"/></svg>공유하기</div>
+              <div class="btn btn-tonal" style="flex:0.8">닫기</div>
+            </div>
+            <div class="v-inset-guide">하단 시스템 내비게이션 바 Safe Inset 적용</div>
+          </div>
+        </div>
+      </div>
+      <div class="navbar" style="background:#FAFBFD"><i></i></div>
+    </div>
+  </div>
+
+</div>
+</section>
+
+<!-- ======================================================= -->
+<section class="group" id="g-more">
+<h2><span class="tag">B</span>변환 기록 · 상세 보기 · 삭제 팝업 · 저장소 관리</h2>
+<div class="row">
+
+  <!-- B1 history -->
+  <div class="shot">
+    <div class="cap">B-1 변환 기록 (FlowRow & 중앙정렬 검색창)<small>검색창 수직 정렬+클리어(X). FlowRow 적용으로 파일 크기(1002 B) 깨짐 완전 해결.</small></div>
+    <div class="phone">
+      <div class="sb"><div class="l num">14:41</div><div class="r"><svg class="i"><use href="#wifi"/></svg><svg class="i"><use href="#bat"/></svg></div></div>
+      <div class="appbar"><div class="title">변환 기록</div><div class="iconbtn"><svg class="i"><use href="#folder"/></svg></div></div>
+      <div class="search-wrap"><svg class="i"><use href="#search"/></svg><div class="sin">VTT</div><div class="clr">✕</div></div>
+      <div class="chips"><div class="fchip on">전체</div><div class="fchip">오늘</div><div class="fchip">이번 주</div><div class="fchip">이번 달</div></div>
+      <div class="list">
+        <div class="daylb">오늘</div>
+        <div class="item">
+          <div class="txtdoc"><span>TXT</span></div>
+          <div class="m">
+            <div class="headrow"><div class="t">VTT_261102_1437.txt</div><div style="display:flex;gap:6px"><svg class="i" style="width:16px;height:16px;color:var(--sky)"><use href="#ext"/></svg><svg class="i" style="width:16px;height:16px;color:var(--t3)"><use href="#trash"/></svg></div></div>
+            <div class="pv">크레이그는 바버라와 눈을 맞췄다 그는 윙크했다 그녀는 하지 않았다 심지어 웃지도 않았다…</div>
+            <div class="flowchips">
+              <span class="f-pill num">2026.11.02 오후 2:37</span>
+              <span class="f-pill">🇰🇷 한국어</span>
+              <span class="f-pill num">1분 4초</span>
+              <span class="f-pill sky num">1002 B</span>
+            </div>
+            <div class="status-row">
+              <span class="badge b-synced" style="padding:2px 8px"><svg class="i"><use href="#check"/></svg>저장 완료</span>
+            </div>
+          </div>
+        </div>
+        <div class="item">
+          <div class="txtdoc"><span>TXT</span></div>
+          <div class="m">
+            <div class="headrow"><div class="t">VTT_261102_1328.txt</div><div style="display:flex;gap:6px"><svg class="i" style="width:16px;height:16px;color:var(--sky)"><use href="#ext"/></svg><svg class="i" style="width:16px;height:16px;color:var(--t3)"><use href="#trash"/></svg></div></div>
+            <div class="pv">자기 남편에게 달려갔고 그 남자는 일을 하나 끝내고 바위를 하기 전에 차고에서 맥주를 한잔하고 있었다…</div>
+            <div class="flowchips">
+              <span class="f-pill num">2026.11.02 오후 1:26</span>
+              <span class="f-pill">🇰🇷 한국어</span>
+              <span class="f-pill num">4분 46초</span>
+              <span class="f-pill sky num">5.1 KB</span>
+            </div>
+            <div class="status-row">
+              <span class="badge b-synced" style="padding:2px 8px"><svg class="i"><use href="#check"/></svg>저장 완료</span>
+            </div>
+          </div>
+        </div>
+        <div class="daylb">어제</div>
+        <div class="item">
+          <div class="txtdoc"><span>TXT</span></div>
+          <div class="m">
+            <div class="headrow"><div class="t">VTT_261101_2014.txt</div><div style="display:flex;gap:6px"><svg class="i" style="width:16px;height:16px;color:var(--sky)"><use href="#ext"/></svg><svg class="i" style="width:16px;height:16px;color:var(--t3)"><use href="#trash"/></svg></div></div>
+            <div class="pv">이번 에피소드에서는 생산성 도구를 고르는 기준에 대해 이야기해 보려고 합니다…</div>
+            <div class="flowchips">
+              <span class="f-pill num">2026.11.01 오후 8:14</span>
+              <span class="f-pill">🇺🇸 English</span>
+              <span class="f-pill num">58분 3초</span>
+              <span class="f-pill sky num">48.2 KB</span>
+            </div>
+            <div class="status-row">
+              <span class="badge b-synced" style="padding:2px 8px"><svg class="i"><use href="#check"/></svg>저장 완료</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bnav"><a><span class="pill"><svg class="i"><use href="#mic"/></svg></span>실시간</a><a class="on"><span class="pill"><svg class="i"><use href="#history"/></svg></span>변환 기록</a></div>
+      <div class="navbar" style="background:var(--surface)"><i></i></div>
+    </div>
+  </div>
+
+  <!-- B2 detail -->
+  <div class="shot">
+    <div class="cap">B-2 문서 상세 보기 (Detail)<small>하늘색 [텍스트 열기] + 파란색 [공유] 액션 바. 자동 번역 규격의 순수 텍스트 전문.</small></div>
+    <div class="phone">
+      <div class="sb"><div class="l num">14:42</div><div class="r"><svg class="i"><use href="#wifi"/></svg><svg class="i"><use href="#bat"/></svg></div></div>
+      <div class="appbar" style="padding-left:4px"><div class="iconbtn"><svg class="i"><use href="#back"/></svg></div><div class="title"></div><div class="iconbtn"><svg class="i"><use href="#trash"/></svg></div></div>
+      <div class="dhead">
+        <h3>VTT_261102_1437.txt</h3>
+        <div class="flowchips">
+          <span class="f-pill num">2026.11.02 오후 2:37</span>
+          <span class="f-pill">🇰🇷 한국어</span>
+          <span class="f-pill num">1분 4초</span>
+          <span class="f-pill sky num">1002 B</span>
+        </div>
+      </div>
+      <div class="actbar">
+        <div class="a sky"><svg class="i"><use href="#file"/></svg>텍스트 열기</div>
+        <div class="a"><svg class="i"><use href="#copy"/></svg>복사</div>
+        <div class="a blue"><svg class="i"><use href="#share"/></svg>공유</div>
+      </div>
+      <div style="height:1px;background:var(--outline);margin:0 20px"></div>
+      <div class="script">
+        <div class="v-log" style="margin-top:6px">[변환 시작: 2026-11-02 14:37:12 | 언어: 한국어]</div>
+        <div class="seg"><div class="txt">크레이그는 바버라와 눈을 맞췄다 그는 윙크했다 그녀는 하지 않았다 심지어 웃지도 않았다 그의 오래된 선물 상자에는 낡은 편지와 흑백 사진들이 가지런히 정돈되어 있었다.</div></div>
+        <div class="seg"><div class="txt">남편에게 달려갔고 그 남자는 일을 하나 끝내고 바위를 하기 전에 차고에서 맥주를 한잔하고 있었다 키가 195cm가 넘는 대형 트럭 운전기사인 남편은 조용히 아내의 말을 경청했다.</div></div>
+        <div class="seg"><div class="txt">이와 같이 로컬 저장 방식을 사용하면 인증 과정이 전혀 필요 없고 완벽한 오프라인 환경에서도 안전하게 음성이 텍스트로 보존됩니다.</div></div>
+        <div class="v-log">[변환 종료: 소요 시간 01:04]</div>
+      </div>
+      <div class="navbar"><i></i></div>
+    </div>
+  </div>
+
+  <!-- B3 delete dialog -->
+  <div class="shot">
+    <div class="cap">B-3 변환 기록 삭제 확인 다이얼로그<small>삭제 터치 시 확인 팝업을 거쳐 소중한 변환 데이터의 실수 삭제를 예방합니다.</small></div>
+    <div class="phone">
+      <div class="sb"><div class="l num">14:43</div><div class="r"><svg class="i"><use href="#wifi"/></svg><svg class="i"><use href="#bat"/></svg></div></div>
+      <div class="appbar"><div class="title">변환 기록</div><div class="iconbtn"><svg class="i"><use href="#folder"/></svg></div></div>
+      <div class="search-wrap"><svg class="i"><use href="#search"/></svg><div class="sin">제목이나 내용으로 검색</div></div>
+      <div class="scrim"></div>
+      <div class="modal-dialog-wrap">
+        <div class="alert-box">
+          <h5>변환 기록 삭제</h5>
+          <p>선택한 변환 기록과 로컬 텍스트 파일(<b>VTT_261102_1437.txt</b>)을 기기에서 영구히 삭제하시겠습니까?</p>
+          <div class="alert-btns">
+            <div class="abtn c">취소</div>
+            <div class="abtn d">삭제</div>
+          </div>
+        </div>
+      </div>
+      <div class="navbar" style="background:var(--surface)"><i></i></div>
+    </div>
+  </div>
+
+  <!-- B4 storage sheet -->
+  <div class="shot">
+    <div class="cap">B-4 저장소 관리 바텀시트 (Storage Sheet)<small>📁 아이콘 터치 시 오픈. 저장 위치 확인, 삼성 '내 파일' 즉시 열기, 용량 통계.</small></div>
+    <div class="phone">
+      <div class="sb"><div class="l num">14:44</div><div class="r"><svg class="i"><use href="#wifi"/></svg><svg class="i"><use href="#bat"/></svg></div></div>
+      <div class="appbar"><div class="logo"><svg class="i"><use href="#wavemic"/></svg></div><div class="title">VoiceToText</div><div class="iconbtn"><svg class="i"><use href="#folder"/></svg></div></div>
+      <div class="idle" style="opacity:.6"><div class="hero"><div class="core"><svg class="i"><use href="#mic"/></svg></div></div></div>
+      <div class="scrim" style="top:28px"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <h4>로컬 저장소 관리</h4>
+        <div class="sub">모든 음성 변환 데이터는 기기 내부 문서에 저장됩니다</div>
+        <div class="card" style="margin-bottom:12px">
+          <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:6px">저장 위치</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><svg class="i" style="color:var(--primary)"><use href="#folder"/></svg><div style="flex:1;font-weight:700;font-size:14px">내 파일 › 문서 › VoiceToText</div><span class="badge b-synced"><svg class="i"><use href="#check"/></svg>정상 작동</span></div>
+          <div style="font-size:11.5px;color:var(--t2);line-height:1.5;margin-bottom:12px">기기 기본 파일 관리자(내 파일)에서 언제든 텍스트 파일을 직접 확인하고 복사할 수 있습니다.</div>
+          <div class="linkbtn"><svg class="i"><use href="#ext"/></svg>내 파일 앱에서 폴더 열기 ↗</div>
+        </div>
+        <div class="card" style="margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-weight:700;font-size:13.5px">저장된 문서 통계</div><div style="font-size:12px;color:var(--t2);margin-top:2px">총 3개 문서 보관 중</div></div>
+          <span class="f-pill sky num" style="font-size:13px;padding:4px 10px">총 54.3 KB</span>
+        </div>
+        <div class="btn btn-outline" style="border-color:#FCA5A5;color:var(--live);margin-top:4px"><svg class="i"><use href="#trash"/></svg>전체 변환 기록 삭제</div>
+      </div>
+      <div class="navbar" style="background:var(--surface)"><i></i></div>
+    </div>
+  </div>
+
+  <!-- B5 notification -->
+  <div class="shot">
+    <div class="cap">B-5 백그라운드 · 상태바 · 알림창<small>상태바 아이콘 2종(변환 중 / 일시중지) + 단축 파일명 + 알림창에서 원터치 제어.</small></div>
+    <div class="phone">
+      <div class="shade">
+        <div class="sb"><div class="l num">14:44 <svg class="i"><use href="#st-rec"/></svg></div><div class="r"><span class="sys-chip">●</span><svg class="i"><use href="#wifi"/></svg><svg class="i"><use href="#bat"/></svg></div></div>
+        <div class="qs"><i class="on"></i><i class="on"></i><i></i><i></i></div>
+        <div class="noti">
+          <div class="h"><span class="ap"><svg class="i"><use href="#st-rec"/></svg></span>VoiceToText · 지금</div>
+          <b class="num">실시간 변환 중 · 00:01:04</b>
+          <div class="b">"크레이그는 바버라와 눈을 맞췄다 그는 윙크했다 그녀는 하지 않았다…"</div>
+          <div class="d">📁 VTT_261102_1437.txt · 로컬 저장 중</div>
+          <div class="acts"><span><svg class="i f"><use href="#pause"/></svg>일시중지</span><span class="stop"><svg class="i f"><use href="#stop"/></svg>종료</span></div>
+        </div>
+        <div style="font-size:11px;color:#94A3B8;margin:10px 6px 8px">일시중지 상태일 때</div>
+        <div class="noti">
+          <div class="h"><span class="ap p"><svg class="i"><use href="#st-pause"/></svg></span>VoiceToText · 1분 전</div>
+          <b class="num">일시중지됨 · 00:01:04</b>
+          <div class="b">재실행하면 기존 VTT_261102_1437.txt 파일에 이어서 기록해요.</div>
+          <div class="acts"><span class="go"><svg class="i f"><use href="#play"/></svg>재실행</span><span class="stop"><svg class="i f"><use href="#stop"/></svg>종료</span></div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="navbar"><i style="background:#fff"></i></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</section>
+
+<!-- ======================================================= -->
+<section class="group" id="g-land">
+<h2><span class="tag">C</span>가로 화면 (Landscape 2-Pane & Safe Insets)</h2>
+<div class="row" style="flex-direction:column;gap:40px">
+
+  <!-- C1 landscape transcribe -->
+  <div class="shot">
+    <div class="cap">C-1 실시간 변환 · 가로보기 (상태바 Safe Inset)<small>상태바 겹침 방지. 좌측 컨트롤(언어 칩+파형+타이머) + 우측 실시간 스크립트 + [실시간 위치로 ⬇].</small></div>
+    <div class="phone land">
+      <div class="sb"><div class="l num">14:45 <svg class="i"><use href="#st-rec"/></svg></div><div class="r"><span class="sys-chip">●</span><svg class="i"><use href="#wifi"/></svg><svg class="i"><use href="#bat"/></svg></div></div>
+      <div class="body">
+        <div class="rail"><div class="logo" style="margin-bottom:6px"><svg class="i"><use href="#wavemic"/></svg></div><a class="on"><span class="pill"><svg class="i"><use href="#mic"/></svg></span>실시간</a><a><span class="pill"><svg class="i"><use href="#history"/></svg></span>기록</a><div class="sp"></div><div class="iconbtn"><svg class="i"><use href="#folder"/></svg></div></div>
+        <div class="lpanel">
+          <div style="display:flex;justify-content:space-between;align-items:center"><span class="badge b-live"><span class="dot blink"></span>LIVE</span><span class="badge b-synced"><svg class="i"><use href="#check"/></svg>로컬 저장 중</span></div>
+          <div class="doc"><div class="txtdoc" style="width:22px;height:28px"><span>TXT</span></div><div class="m"><div class="t" style="font-size:12.5px">VTT_261102_1437.txt</div><div class="p"><svg class="i"><use href="#folder"/></svg>내 파일 › 문서 › VoiceToText</div></div></div>
+          <div class="meter"><div class="timer num">00:01:04</div><div class="wave" id="w3" style="height:28px"></div></div>
+          <div class="btns"><div class="btn btn-tonal"><svg class="i f"><use href="#pause"/></svg>일시중지</div><div class="btn btn-danger"><svg class="i f"><use href="#stop"/></svg>종료</div></div>
+        </div>
+        <div class="rpanel">
+          <div class="rhead"><span>실시간 스크립트</span><span style="color:var(--t2);font-weight:600;font-size:12px">🇰🇷 한국어 온디바이스</span></div>
+          <div class="script">
+            <div class="seg"><div class="txt">크레이그는 바버라와 눈을 맞췄다 그는 윙크했다 그녀는 하지 않았다 심지어 웃지도 않았다 그의 오래된 선물 상자에는 낡은 편지와 흑백 사진들이 가지런히 정돈되어 있었다.</div></div>
+            <div class="seg"><div class="txt">남편에게 달려갔고 그 남자는 일을 하나 끝내고 바위를 하기 전에 차고에서 맥주를 한잔하고 있었다 키가 195cm가 넘는 대형 트럭 운전기사인 남편은 조용히 아내의 말을 경청했다.</div></div>
+            <div class="seg interim"><div class="txt">이와 같이 로컬 저장 방식을 사용하면 인증 과정이 전혀 필요 없고 완벽한 오프라인 환경에서도<span class="caret"></span></div></div>
+            <div class="jump" style="bottom:10px"><svg class="i"><use href="#down"/></svg>실시간 위치로</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- C2 landscape history -->
+  <div class="shot">
+    <div class="cap">C-2 변환 기록 · 가로보기 (FlowRow 칩 줄바꿈)<small>좌측 목록(40%) 메타데이터 FlowRow 적용으로 파일 크기(1002 B) 온전 보존 + 우측(60%) 하늘색/파란색 액션 바.</small></div>
+    <div class="phone land">
+      <div class="sb"><div class="l num">14:46</div><div class="r"><svg class="i"><use href="#wifi"/></svg><svg class="i"><use href="#bat"/></svg></div></div>
+      <div class="body">
+        <div class="rail"><div class="logo" style="margin-bottom:6px"><svg class="i"><use href="#wavemic"/></svg></div><a><span class="pill"><svg class="i"><use href="#mic"/></svg></span>실시간</a><a class="on"><span class="pill"><svg class="i"><use href="#history"/></svg></span>기록</a><div class="sp"></div><div class="iconbtn"><svg class="i"><use href="#folder"/></svg></div></div>
+        <div style="width:310px;flex:none;border-right:1px solid var(--outline);display:flex;flex-direction:column">
+          <div class="search-wrap" style="margin:8px 10px;height:38px;font-size:13px"><svg class="i"><use href="#search"/></svg><div class="sin">VTT</div><div class="clr">✕</div></div>
+          <div class="list" style="padding:0 8px">
+            <div class="item sel" style="padding:9px;margin-bottom:6px">
+              <div class="m">
+                <div class="t" style="font-size:13px">VTT_261102_1437.txt</div>
+                <div class="flowchips" style="margin-top:4px">
+                  <span class="f-pill num">오늘 14:37</span>
+                  <span class="f-pill">🇰🇷 한국어</span>
+                  <span class="f-pill num">1분 4초</span>
+                  <span class="f-pill sky num">1002 B</span>
+                </div>
+                <div class="status-row" style="margin-top:4px">
+                  <span class="badge b-synced" style="padding:1px 6px;font-size:10.5px"><svg class="i"><use href="#check"/></svg>저장 완료</span>
+                </div>
+              </div>
+            </div>
+            <div class="item" style="padding:9px;margin-bottom:6px">
+              <div class="m">
+                <div class="t" style="font-size:13px">VTT_261102_1328.txt</div>
+                <div class="flowchips" style="margin-top:4px">
+                  <span class="f-pill num">오늘 13:26</span>
+                  <span class="f-pill">🇰🇷 한국어</span>
+                  <span class="f-pill num">4분 46초</span>
+                  <span class="f-pill sky num">5.1 KB</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="rpanel">
+          <div class="rhead" style="height:48px"><span style="font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;margin-right:10px">VTT_261102_1437.txt</span><span style="display:flex;gap:6px;flex:none"><span class="actbar" style="padding:0"><span class="a sky" style="height:32px;padding:0 10px"><svg class="i"><use href="#file"/></svg>텍스트 열기</span><span class="a" style="height:32px;padding:0 10px"><svg class="i"><use href="#copy"/></svg>복사</span><span class="a blue" style="height:32px;padding:0 10px"><svg class="i"><use href="#share"/></svg>공유</span></span></span></div>
+          <div class="script">
+            <div class="v-log" style="margin-top:4px">[변환 시작: 2026-11-02 14:37:12 | 언어: 한국어]</div>
+            <div class="seg"><div class="txt" style="font-size:14px">크레이그는 바버라와 눈을 맞췄다 그는 윙크했다 그녀는 하지 않았다 심지어 웃지도 않았다 그의 오래된 선물 상자에는 낡은 편지와 흑백 사진들이 가지런히 정돈되어 있었다.</div></div>
+            <div class="seg"><div class="txt" style="font-size:14px">남편에게 달려갔고 그 남자는 일을 하나 끝내고 바위를 하기 전에 차고에서 맥주를 한잔하고 있었다 키가 195cm가 넘는 대형 트럭 운전기사인 남편은 조용히 아내의 말을 경청했다.</div></div>
+            <div class="v-log">[변환 종료: 소요 시간 01:04]</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</section>
+
+<!-- ======================================================= -->
+<section class="group" id="g-sys">
+<h2><span class="tag">D</span>디자인 시스템 (Design Tokens & Color Codes)</h2>
+<div class="row">
+  <div class="panel" style="width:880px">
+    <div class="cap" style="margin-bottom:12px">컬러 토큰 (표준 액션 & 상태 컬러)</div>
+    <div class="tok">
+      <div class="sw"><div class="c" style="background:#0284C7"></div><div class="l"><b>Action-Open</b><span>#0284C7 · 하늘색 (텍스트 열기 버튼/아이콘)</span></div></div>
+      <div class="sw"><div class="c" style="background:#2563EB"></div><div class="l"><b>Action-Share / Primary</b><span>#2563EB · 파란색 (공유하기, 메인 CTA)</span></div></div>
+      <div class="sw"><div class="c" style="background:#EF4444"></div><div class="l"><b>Status-Live</b><span>#EF4444 · 레드 (변환 중, 녹음 종료)</span></div></div>
+      <div class="sw"><div class="c" style="background:#F59E0B"></div><div class="l"><b>Status-Paused</b><span>#F59E0B · 앰버 (일시중지 배지/타이머)</span></div></div>
+      <div class="sw"><div class="c" style="background:#10B981"></div><div class="l"><b>Status-Saved</b><span>#10B981 · 에메랄드 (로컬 저장 완료 배지)</span></div></div>
+      <div class="sw"><div class="c" style="background:#0F172A"></div><div class="l"><b>Text-Primary</b><span>#0F172A · 딥블랙 (확정 본문 텍스트)</span></div></div>
+      <div class="sw"><div class="c" style="background:#64748B"></div><div class="l"><b>Text-Secondary</b><span>#64748B · 실시간 인식 중 임시 문장</span></div></div>
+      <div class="sw"><div class="c" style="background:#F8FAFC;border-bottom:1px solid var(--outline)"></div><div class="l"><b>Surface</b><span>#F8FAFC · 기본 배경</span></div></div>
+    </div>
+
+    <div class="cap" style="margin:24px 0 12px">다국어 칩 및 FlowRow 줄바꿈 규칙</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <div class="lchip on">🇰🇷 한국어</div>
+      <div class="lchip">🌐 자동 감지</div>
+      <div class="lchip">🇺🇸 English</div>
+      <div class="lchip">🇯🇵 日本語</div>
+      <span class="f-pill sky num" style="padding:4px 10px;font-size:12px">1002 B (줄바꿈 방지)</span>
+      <span class="badge b-synced"><svg class="i"><use href="#check"/></svg>저장 완료</span>
+    </div>
+
+    <div class="cap" style="margin:24px 0 12px">타이포그래피 및 Safe Inset 가이드</div>
+    <div class="typo">
+      <div style="font-size:22px;font-weight:800">화면/다이얼로그 제목 22 / ExtraBold<small>온보딩·완료·인앱뷰어 제목</small></div>
+      <div class="num" style="font-size:24px;font-weight:800">00:01:04<small>타이머 24(세로)·30(가로) / 고정폭 숫자</small></div>
+      <div style="font-size:14.5px;line-height:1.65">실시간 & 인앱 뷰어 스크립트 본문 14.5 / 행간 165% (자동 번역 호환)</div>
+      <div style="font-size:12.5px;color:var(--t2)">Safe Insets: statusBarsPadding(상단 노치 보호), systemBarsPadding(하단 버튼 안전지대)</div>
+    </div>
+  </div>
+
+  <div class="panel" style="width:420px">
+    <div class="cap" style="margin-bottom:4px">상태바 알림 아이콘 (단색 · 24dp)</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:18px;line-height:1.5">백그라운드 포그라운드 서비스 동작 시 상태바 노출</div>
+    <div class="iconspec">
+      <div class="ib"><div class="box"><svg><use href="#st-rec"/></svg></div><b style="color:var(--t1)">ic_stat_transcribing</b>변환 중</div>
+      <div class="ib"><div class="box"><svg><use href="#st-pause"/></svg></div><b style="color:var(--t1)">ic_stat_paused</b>일시중지</div>
+    </div>
+
+    <div class="cap" style="margin:26px 0 10px">앱 아이콘 (Adaptive 108dp)</div>
+    <div style="display:flex;gap:16px;align-items:center">
+      <div style="width:84px;height:84px;border-radius:24px;background:linear-gradient(135deg,#2563EB,#7C3AED);display:grid;place-items:center;color:#fff;box-shadow:0 8px 20px rgba(37,99,235,.35)"><svg class="i" style="width:44px;height:44px;stroke-width:2.4"><use href="#wavemic"/></svg></div>
+      <div style="width:84px;height:84px;border-radius:50%;background:linear-gradient(135deg,#2563EB,#7C3AED);display:grid;place-items:center;color:#fff"><svg class="i" style="width:40px;height:40px;stroke-width:2.4"><use href="#wavemic"/></svg></div>
+    </div>
+    <div style="font-size:12px;color:var(--t2);margin-top:10px;line-height:1.5">VoiceToText 온디바이스 로컬 유틸리티</div>
+  </div>
+</div>
+</section>
+
+<!-- ======================================================= -->
+<section class="group" id="g-trans">
+<h2><span class="tag">E</span>다국어 텍스트 번역 기능 (Text Translation v3.0)</h2>
+<div class="row">
+
+  <!-- E1 Live Subtitle -->
+  <div class="shot">
+    <div class="cap">E-1 실시간 번역 자막 모드 (Live Subtitles)<small>영어 미디어 재생 시 실시간 음성인식 + 하단에 1초 내 한국어 번역 자막 스트리밍.</small></div>
+    <div class="phone">
+      <div class="sb"><div class="l num">15:10 <svg class="i"><use href="#st-rec"/></svg></div><div class="r"><span class="sys-chip">●</span><svg class="i"><use href="#wifi"/></svg><svg class="i"><use href="#bat"/></svg></div></div>
+      <div class="appbar"><div class="logo"><svg class="i"><use href="#wavemic"/></svg></div><div class="title">VoiceToText</div><span class="badge b-live"><span class="dot blink"></span>LIVE</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:0 16px 8px">
+        <div class="lchip on" style="background:#EEF2FF;color:#4338CA;border-color:#C7D2FE">🌐 실시간 자막: 🇺🇸 ➔ 🇰🇷 ON</div>
+        <span class="badge b-synced" style="padding:2px 8px"><svg class="i"><use href="#check"/></svg>오프라인 번역</span>
+      </div>
+      <div class="script">
+        <div class="seg">
+          <div class="txt" style="font-weight:700">Stay hungry, stay foolish.</div>
+          <div class="sub-card"><span style="flex:none">🌐</span><span>늘 갈망하고, 우직하게 나아가십시오.</span></div>
+        </div>
+        <div class="seg">
+          <div class="txt" style="font-weight:700">Your time is limited, so don't waste it living someone else's life.</div>
+          <div class="sub-card"><span style="flex:none">🌐</span><span>여러분의 시간은 유한하니, 다른 사람의 삶을 사느라 낭비하지 마십시오.</span></div>
+        </div>
+        <div class="seg interim">
+          <div class="txt" style="font-weight:700">Don't let the noise of others' opinions drown out your own inner voice.<span class="caret"></span></div>
+          <div class="sub-card" style="opacity:.7"><span style="flex:none">🌐</span><span>타인의 의견이라는 소음이 여러분 내면의 목소리를 잠식하지 않도록...</span></div>
+        </div>
+      </div>
+      <div class="dock">
+        <div class="meter"><div class="wave" id="w4"></div><div class="timer num">00:02:18</div></div>
+        <div class="btns"><div class="btn btn-tonal"><svg class="i f"><use href="#pause"/></svg>일시중지</div><div class="btn btn-danger"><svg class="i f"><use href="#stop"/></svg>종료</div></div>
+      </div>
+      <div class="navbar" style="background:var(--surface)"><i></i></div>
+    </div>
+  </div>
+
+  <!-- E2 In-App Viewer Bilingual Parallel View -->
+  <div class="shot">
+    <div class="cap">E-2 인앱 뷰어 대조 보기 (Bilingual Parallel)<small>원문과 번역문이 문단별로 나란히 매칭. 외국어 회의록/강의 검토 및 학습 극대화.</small></div>
+    <div class="phone">
+      <div class="sb"><div class="l num">15:12</div><div class="r"><svg class="i"><use href="#wifi"/></svg><svg class="i"><use href="#bat"/></svg></div></div>
+      <div class="appbar"><div class="logo"><svg class="i"><use href="#wavemic"/></svg></div><div class="title">VoiceToText</div></div>
+      <div class="scrim"></div>
+      <div class="modal-dialog-wrap">
+        <div class="v-dialog">
+          <div class="v-head">
+            <div>
+              <div class="t">VTT_261102_1437.txt</div>
+              <div class="tag"><span>🇰🇷 한국어</span><span>➔</span><span style="color:#4338CA;font-weight:700">🇺🇸 English 대조</span></div>
+            </div>
+            <div class="iconbtn" style="width:32px;height:32px"><svg class="i"><use href="#close"/></svg></div>
+          </div>
+          <div class="tab-3way" style="margin:10px 14px 6px">
+            <div class="t-btn">원문</div>
+            <div class="t-btn">번역문</div>
+            <div class="t-btn on">대조 (나란히)</div>
+          </div>
+          <div class="v-body" style="padding:10px 14px">
+            <div class="bilingual-card">
+              <div class="s-txt">크레이그는 바버라와 눈을 맞췄다 그는 윙크했다 그녀는 하지 않았다 심지어 웃지도 않았다 그의 오래된 선물 상자에는 낡은 편지와 흑백 사진들이 가지런히 정돈되어 있었다.</div>
+              <div class="t-txt">Craig made eye contact with Barbara. He winked. She didn't. She didn't even smile. In his old gift box, old letters and black-and-white photos were neatly organized.</div>
+            </div>
+            <div class="bilingual-card">
+              <div class="s-txt">남편에게 달려갔고 그 남자는 일을 하나 끝내고 바위를 하기 전에 차고에서 맥주를 한잔하고 있었다 키가 195cm가 넘는 대형 트럭 운전기사인 남편은 조용히 아내의 말을 경청했다.</div>
+              <div class="t-txt">She ran to her husband, who had just finished a job and was having a beer in the garage before hitting the rocks. The husband, a large truck driver over 195cm tall, listened quietly to his wife.</div>
+            </div>
+          </div>
+          <div class="v-foot">
+            <div class="v-btns">
+              <div class="btn btn-outline" style="flex:1"><svg class="i"><use href="#copy"/></svg>대조문 복사</div>
+              <div class="btn btn-primary" style="flex:1.2"><svg class="i"><use href="#share"/></svg>대조본 공유</div>
+              <div class="btn btn-tonal" style="flex:0.8">닫기</div>
+            </div>
+            <div class="v-inset-guide">하단 시스템 내비게이션 바 Safe Inset 적용</div>
+          </div>
+        </div>
+      </div>
+      <div class="navbar" style="background:#FAFBFD"><i></i></div>
+    </div>
+  </div>
+
+  <!-- E3 Translated View -->
+  <div class="shot">
+    <div class="cap">E-3 인앱 뷰어 번역문 단독 열람 (Translated)<small>독립 생성된 VTT_..._trans_en.txt 전문 열람. [번역문 복사], [번역문 공유] 지원.</small></div>
+    <div class="phone">
+      <div class="sb"><div class="l num">15:14</div><div class="r"><svg class="i"><use href="#wifi"/></svg><svg class="i"><use href="#bat"/></svg></div></div>
+      <div class="appbar"><div class="logo"><svg class="i"><use href="#wavemic"/></svg></div><div class="title">VoiceToText</div></div>
+      <div class="scrim"></div>
+      <div class="modal-dialog-wrap">
+        <div class="v-dialog">
+          <div class="v-head">
+            <div>
+              <div class="t">VTT_261102_1437_trans_en.txt</div>
+              <div class="tag"><span style="color:#4338CA;font-weight:700">🇺🇸 English 번역본</span><span>·</span><span>1.2 KB</span><span>·</span><span>오프라인 ML Kit</span></div>
+            </div>
+            <div class="iconbtn" style="width:32px;height:32px"><svg class="i"><use href="#close"/></svg></div>
+          </div>
+          <div class="tab-3way" style="margin:10px 14px 6px">
+            <div class="t-btn">원문</div>
+            <div class="t-btn on">번역문</div>
+            <div class="t-btn">대조 (나란히)</div>
+          </div>
+          <div class="v-body">
+            <div class="v-log">[Translation: Korean ➔ English | On-Device ML Kit]</div>
+            <div class="v-txt">Craig made eye contact with Barbara. He winked. She didn't. She didn't even smile. In his old gift box, old letters and black-and-white photos were neatly organized.</div>
+            <div class="v-txt">She ran to her husband, who had just finished a job and was having a beer in the garage before hitting the rocks. The husband, a large truck driver over 195cm tall, listened quietly to his wife.</div>
+            <div class="v-txt">In this way, using the local storage method eliminates the need for any authentication process, and your voice is securely preserved as text even in a completely offline environment.</div>
+            <div class="v-log">[Completed: 3 paragraphs | 1.2s]</div>
+          </div>
+          <div class="v-foot">
+            <div class="v-btns">
+              <div class="btn btn-outline" style="flex:1"><svg class="i"><use href="#copy"/></svg>번역문 복사</div>
+              <div class="btn btn-primary" style="flex:1.2"><svg class="i"><use href="#share"/></svg>번역문 공유</div>
+              <div class="btn btn-tonal" style="flex:0.8">닫기</div>
+            </div>
+            <div class="v-inset-guide">하단 시스템 내비게이션 바 Safe Inset 적용</div>
+          </div>
+        </div>
+      </div>
+      <div class="navbar" style="background:#FAFBFD"><i></i></div>
+    </div>
+  </div>
+
+  <!-- E4 Model Download & Progress -->
+  <div class="shot">
+    <div class="cap">E-4 오프라인 번역 모델 다운로드 & 진행<small>100% 오프라인 동작을 위한 언어팩(약 32MB) 사전 다운로드 및 프로그레스.</small></div>
+    <div class="phone">
+      <div class="sb"><div class="l num">15:16</div><div class="r"><svg class="i"><use href="#wifi"/></svg><svg class="i"><use href="#bat"/></svg></div></div>
+      <div class="appbar"><div class="title">변환 완료</div><div class="iconbtn"><svg class="i"><use href="#folder"/></svg></div></div>
+      <div class="idle" style="opacity:.4;padding:0 20px">
+        <div class="hero"><div class="core"><svg class="i"><use href="#check"/></svg></div></div>
+      </div>
+      <div class="scrim"></div>
+      <div class="modal-dialog-wrap">
+        <div class="alert-box" style="width:315px">
+          <div style="width:44px;height:44px;border-radius:12px;background:#EEF2FF;color:#4338CA;display:grid;place-items:center;margin-bottom:12px"><svg class="i" style="width:24px;height:24px"><use href="#wifi"/></svg></div>
+          <h5 style="font-size:17px;font-weight:800;margin-bottom:6px">오프라인 영어 번역 모델</h5>
+          <p style="font-size:12.5px;color:var(--t2);line-height:1.55;margin-bottom:16px">인터넷 없이 기기 내부에서 100% 안전하게 번역하기 위해 <b>영어 번역 패키지(약 32 MB)</b>를 다운로드합니다.</p>
+          <div style="background:#F1F5F9;border-radius:10px;padding:10px 12px;margin-bottom:18px">
+            <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:6px"><span>번역 모델 준비 중</span><span class="num" style="color:var(--trans)">100%</span></div>
+            <div style="height:6px;border-radius:3px;background:#E2E8F0;overflow:hidden"><div style="width:100%;height:100%;background:var(--trans)"></div></div>
+          </div>
+          <div class="alert-btns">
+            <div class="abtn c" style="flex:1;text-align:center">취소</div>
+            <div class="abtn" style="flex:1.5;background:var(--trans);color:#fff;text-align:center">번역 시작</div>
+          </div>
+        </div>
+      </div>
+      <div class="navbar" style="background:var(--surface)"><i></i></div>
+    </div>
+  </div>
+
+  <!-- E5 Landscape Dual Pane -->
+  <div class="shot" style="width:800px">
+    <div class="cap">E-5 가로모드 2-Pane 원문/번역문 듀얼 스크립트<small>좌측 원본 미디어 스크립트(40%) + 우측 실시간 한국어 번역 자막(60%) 최적화.</small></div>
+    <div class="phone land">
+      <div class="sb"><div class="l num">15:18 <svg class="i"><use href="#st-rec"/></svg></div><div class="r"><span class="badge b-synced" style="padding:1px 6px;font-size:10px">오프라인 번역 ON</span><svg class="i"><use href="#wifi"/></svg><svg class="i"><use href="#bat"/></svg></div></div>
+      <div class="body">
+        <div class="rail"><div class="logo" style="margin-bottom:6px"><svg class="i"><use href="#wavemic"/></svg></div><a class="on"><span class="pill"><svg class="i"><use href="#mic"/></svg></span>실시간</a><a><span class="pill"><svg class="i"><use href="#history"/></svg></span>기록</a><div class="sp"></div><div class="iconbtn"><svg class="i"><use href="#folder"/></svg></div></div>
+        <div style="width:330px;flex:none;border-right:1px solid var(--outline);display:flex;flex-direction:column;background:var(--surface)">
+          <div class="rhead" style="height:42px"><span style="font-size:13px;font-weight:800">🇺🇸 원본 오디오 스크립트</span><span class="num" style="font-size:11.5px;color:var(--t2)">00:02:18</span></div>
+          <div class="script" style="padding:10px 14px">
+            <div class="seg"><div class="txt" style="font-size:13.5px">Stay hungry, stay foolish.</div></div>
+            <div class="seg"><div class="txt" style="font-size:13.5px">Your time is limited, so don't waste it living someone else's life.</div></div>
+            <div class="seg interim"><div class="txt" style="font-size:13.5px">Don't let the noise of others' opinions...<span class="caret"></span></div></div>
+          </div>
+        </div>
+        <div class="rpanel" style="background:#FAFBFD">
+          <div class="rhead" style="height:42px">
+            <span style="font-size:13px;font-weight:800;color:#3730A3">🇰🇷 실시간 한국어 번역 자막</span>
+            <span class="badge" style="background:#EEF2FF;color:#4338CA;padding:2px 8px;font-size:11px">ML Kit 온디바이스</span>
+          </div>
+          <div class="script" style="padding:10px 18px">
+            <div class="sub-card" style="margin-bottom:10px"><span style="flex:none">🌐</span><span>늘 갈망하고, 우직하게 나아가십시오.</span></div>
+            <div class="sub-card" style="margin-bottom:10px"><span style="flex:none">🌐</span><span>여러분의 시간은 유한하니, 다른 사람의 삶을 사느라 낭비하지 마십시오.</span></div>
+            <div class="sub-card" style="opacity:.7"><span style="flex:none">🌐</span><span>타인의 의견이라는 소음이 여러분 내면의 목소리를 잠식하지 않도록...</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</section>
+
+<script>
+  function wave(id, n, seed, amp){
+    const el=document.getElementById(id); if(!el) return;
+    let s=seed;
+    for(let i=0;i<n;i++){
+      s=(s*9301+49297)%233280; const r=s/233280;
+      const env=Math.sin(Math.PI*i/n)*.7+.3;
+      const h=Math.max(3,(r*env*amp));
+      const b=document.createElement('i'); b.style.height=h+'px'; el.appendChild(b);
+    }
+  }
+  wave('w1',36,7,34); wave('w2',36,3,6); wave('w3',30,11,28); wave('w4',36,13,30);
+  const g=new URLSearchParams(location.search).get('g');
+  if(g){document.querySelectorAll('section.group').forEach(s=>{if(s.id!==g)s.style.display='none'});
+        document.querySelector('h1.board').style.display='none';document.querySelector('.board-sub').style.display='none';}
+</script>
+</body>
+</html>

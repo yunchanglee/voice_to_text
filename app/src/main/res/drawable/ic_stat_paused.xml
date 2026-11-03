@@ -1,0 +1,19 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Mic body -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M9,13c1.66,0 3,-1.34 3,-3V5c0,-1.66 -1.34,-3 -3,-3S6,3.34 6,5v5C6,11.66 7.34,13 9,13z"/>
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M15,9v1c0,3.07 -2.18,5.64 -5.08,6.18V19H7"/>
+    <!-- Pause bars on right side -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M16,13h2v8h-2z M20,13h2v8h-2z"/>
+</vector>
