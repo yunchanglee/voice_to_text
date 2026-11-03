@@ -83,6 +83,66 @@ class VoiceToTextRepository(
     }
 
     /**
+     * 기존 문서에 이어서 작성(Append) 세션 시작
+     */
+    suspend fun startAppendSession(existingDocId: String): DocumentEntity = withContext(Dispatchers.IO) {
+        val doc = documentDao.getDocumentById(existingDocId)
+            ?: throw IllegalArgumentException("문서를 찾을 수 없습니다: $existingDocId")
+
+        val file = doc.localFilePath?.let { File(it) }
+            ?: File(localFileManager.getVoiceToTextDirectory(), "${doc.title}.txt")
+
+        activeDocId = doc.id
+        activeLocalFile = file
+
+        // 저장 상태를 SYNCING으로 갱신
+        documentDao.updateSyncStatus(doc.id, SyncStatus.SYNCING, doc.googleDocsFileId)
+        doc
+    }
+
+    /**
+     * 파일 및 문서 제목 변경 (Save As / Rename)
+     */
+    suspend fun renameDocument(documentId: String, newTitleWithoutExt: String): Result<DocumentEntity> = withContext(Dispatchers.IO) {
+        val doc = documentDao.getDocumentById(documentId)
+            ?: return@withContext Result.failure(IllegalArgumentException("문서를 찾을 수 없습니다: $documentId"))
+
+        val currentFile = doc.localFilePath?.let { File(it) }
+            ?: File(localFileManager.getVoiceToTextDirectory(), "${doc.title}.txt")
+
+        val renameResult = localFileManager.renameTextFile(currentFile, newTitleWithoutExt)
+        if (renameResult.isFailure) {
+            return@withContext Result.failure(renameResult.exceptionOrNull() ?: Exception("파일 이름 변경 실패"))
+        }
+
+        val newFile = renameResult.getOrNull()!!
+        val newTitle = newFile.nameWithoutExtension
+
+        // 번역 파일 경로가 존재했었다면 새 이름으로 업데이트
+        val newTransPath = if (!doc.translatedFilePath.isNullOrBlank()) {
+            val transFile = File(doc.translatedFilePath)
+            val parent = transFile.parentFile ?: localFileManager.getVoiceToTextDirectory()
+            val suffix = transFile.name.removePrefix("${doc.title}_trans_")
+            File(parent, "${newTitle}_trans_$suffix").absolutePath
+        } else {
+            null
+        }
+
+        documentDao.updateTitleAndPaths(
+            id = documentId,
+            newTitle = newTitle,
+            newFilePath = newFile.absolutePath,
+            newTransPath = newTransPath
+        )
+
+        val updated = documentDao.getDocumentById(documentId)!!
+        if (activeDocId == documentId) {
+            activeLocalFile = newFile
+        }
+        Result.success(updated)
+    }
+
+    /**
      * 확정된 텍스트 문장 추가: Room DB 및 로컬 .txt 파일에 즉시 기록
      */
     suspend fun addFinalTranscript(

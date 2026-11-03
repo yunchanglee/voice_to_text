@@ -339,6 +339,89 @@ class LocalFileManager(private val context: Context) {
     }
 
     /**
+     * 파일명 유효성 검사 (공백 금지, OS 금지문자 금지)
+     */
+    fun isValidFileName(name: String): Boolean {
+        val trimmed = name.trim().removeSuffix(".txt")
+        return trimmed.isNotBlank() && !FORBIDDEN_FILE_CHARS.containsMatchIn(trimmed)
+    }
+
+    /**
+     * 파일명 정제 (금지문자 제거, 앞뒤 공백 제거, 60자 제한)
+     */
+    fun sanitizeFileName(name: String): String {
+        val base = name.trim().removeSuffix(".txt")
+        val sanitized = base.replace(FORBIDDEN_FILE_CHARS, "_")
+            .trim()
+            .take(60)
+        return sanitized.ifBlank { "VTT_문서" }
+    }
+
+    /**
+     * 텍스트 파일 이름 변경 (물리 파일 rename 및 연동 번역 파일 일괄 rename)
+     */
+    suspend fun renameTextFile(oldFile: File, newNameWithoutExt: String): Result<File> = withContext(Dispatchers.IO) {
+        try {
+            if (!oldFile.exists()) {
+                return@withContext Result.failure(java.io.FileNotFoundException("원본 파일이 존재하지 않습니다: ${oldFile.name}"))
+            }
+
+            val sanitized = sanitizeFileName(newNameWithoutExt)
+            val parentDir = oldFile.parentFile ?: getVoiceToTextDirectory()
+            val newFile = File(parentDir, "$sanitized.txt")
+
+            // 이름이 동일하면 그대로 성공 처리
+            if (oldFile.canonicalPath == newFile.canonicalPath) {
+                return@withContext Result.success(oldFile)
+            }
+
+            // 파일 중복 검사
+            var targetFile = newFile
+            var counter = 1
+            while (targetFile.exists() && targetFile.canonicalPath != oldFile.canonicalPath) {
+                targetFile = File(parentDir, "${sanitized}_$counter.txt")
+                counter++
+            }
+
+            val oldBaseName = oldFile.nameWithoutExtension
+            val newBaseName = targetFile.nameWithoutExtension
+
+            val renamed = oldFile.renameTo(targetFile)
+            if (!renamed) {
+                return@withContext Result.failure(java.io.IOException("파일 이름 변경에 실패했습니다."))
+            }
+
+            // 구 경로 및 신규 경로 미디어 스캐너 인덱싱 갱신
+            scanFileWithSystem(oldFile)
+            scanFileWithSystem(targetFile)
+
+            // 연계 번역 파일 일괄 이름 변경 (_trans_*.txt, _bilingual.txt)
+            val allFiles = parentDir.listFiles() ?: emptyArray()
+            for (f in allFiles) {
+                if (f.name.startsWith("${oldBaseName}_trans_") && f.name.endsWith(".txt")) {
+                    val suffix = f.name.removePrefix("${oldBaseName}_trans_")
+                    val targetTransFile = File(parentDir, "${newBaseName}_trans_$suffix")
+                    if (f.renameTo(targetTransFile)) {
+                        scanFileWithSystem(f)
+                        scanFileWithSystem(targetTransFile)
+                    }
+                } else if (f.name == "${oldBaseName}_bilingual.txt") {
+                    val targetBilingualFile = File(parentDir, "${newBaseName}_bilingual.txt")
+                    if (f.renameTo(targetBilingualFile)) {
+                        scanFileWithSystem(f)
+                        scanFileWithSystem(targetBilingualFile)
+                    }
+                }
+            }
+
+            Result.success(targetFile)
+        } catch (e: Exception) {
+            Log.e("LocalFileManager", "Error renaming file: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
      * 저장 통계 (파일 개수, 총 용량)
      */
     suspend fun getStorageStats(): Pair<Int, Long> = withContext(Dispatchers.IO) {
@@ -359,5 +442,9 @@ class LocalFileManager(private val context: Context) {
             f.delete()
             scanFileWithSystem(f)
         }
+    }
+
+    companion object {
+        private val FORBIDDEN_FILE_CHARS = Regex("[\\\\/:*?\"<>|]")
     }
 }

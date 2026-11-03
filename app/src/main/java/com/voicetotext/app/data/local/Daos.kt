@@ -34,6 +34,12 @@ interface DocumentDao {
     @Query("UPDATE documents SET language = :language WHERE id = :id")
     suspend fun updateLanguage(id: String, language: String)
 
+    @Query("UPDATE documents SET title = :newTitle, localFilePath = :newFilePath WHERE id = :id")
+    suspend fun updateTitleAndPath(id: String, newTitle: String, newFilePath: String?)
+
+    @Query("UPDATE documents SET title = :newTitle, localFilePath = :newFilePath, translatedFilePath = :newTransPath WHERE id = :id")
+    suspend fun updateTitleAndPaths(id: String, newTitle: String, newFilePath: String?, newTransPath: String?)
+
     @Query("UPDATE documents SET translatedText = :transText, targetLanguage = :targetLang, translatedFilePath = :filePath WHERE id = :id")
     suspend fun updateTranslation(id: String, transText: String, targetLang: String, filePath: String?)
 

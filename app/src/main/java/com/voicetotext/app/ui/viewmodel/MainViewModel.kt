@@ -35,6 +35,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // 서비스 브릿지 상태
     val captureState: StateFlow<CaptureState> = AudioCaptureService.Bridge.captureState
     val currentDocument: StateFlow<DocumentEntity?> = AudioCaptureService.Bridge.currentDocument
+    val isAppendMode: StateFlow<Boolean> = AudioCaptureService.Bridge.isAppendMode
     val elapsedTimeSeconds: StateFlow<Long> = AudioCaptureService.Bridge.elapsedTimeSeconds
     val interimText: StateFlow<String> = AudioCaptureService.Bridge.interimText
     val waveform: StateFlow<List<Float>> = AudioCaptureService.Bridge.waveform
@@ -125,6 +126,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val langCode = selectedLanguage.value.code
             val doc = repository.createNewSession(langCode)
+            AudioCaptureService.Bridge.setIsAppendMode(false)
             AudioCaptureService.Bridge.setCurrentDocument(doc)
 
             val context = getApplication<Application>()
@@ -133,6 +135,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 putExtra(AudioCaptureService.EXTRA_RESULT_CODE, resultCode)
                 putExtra(AudioCaptureService.EXTRA_RESULT_DATA, data)
                 putExtra(AudioCaptureService.EXTRA_LANGUAGE, langCode)
+                putExtra(AudioCaptureService.EXTRA_IS_APPEND, false)
+            }
+            context.startForegroundService(intent)
+        }
+    }
+
+    fun startAppendSession(targetDoc: DocumentEntity, resultCode: Int, data: Intent) {
+        viewModelScope.launch {
+            val langCode = targetDoc.language
+            val doc = repository.startAppendSession(targetDoc.id)
+            AudioCaptureService.Bridge.setIsAppendMode(true)
+            AudioCaptureService.Bridge.setCurrentDocument(doc)
+            AudioCaptureService.Bridge.setElapsedTime(doc.durationSeconds)
+
+            val context = getApplication<Application>()
+            val intent = Intent(context, AudioCaptureService::class.java).apply {
+                action = AudioCaptureService.ACTION_START
+                putExtra(AudioCaptureService.EXTRA_RESULT_CODE, resultCode)
+                putExtra(AudioCaptureService.EXTRA_RESULT_DATA, data)
+                putExtra(AudioCaptureService.EXTRA_LANGUAGE, langCode)
+                putExtra(AudioCaptureService.EXTRA_IS_APPEND, true)
             }
             context.startForegroundService(intent)
         }
@@ -196,6 +219,37 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             repository.deleteAllDocuments()
             _selectedDetailDoc.value = null
+        }
+    }
+
+    fun renameDocument(
+        documentId: String,
+        newTitleWithoutExt: String,
+        onComplete: (Result<DocumentEntity>) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            val result = repository.renameDocument(documentId, newTitleWithoutExt)
+            if (result.isSuccess) {
+                val updated = result.getOrNull()
+                if (_selectedDetailDoc.value?.id == documentId) {
+                    _selectedDetailDoc.value = updated
+                }
+                if (currentDocument.value?.id == documentId) {
+                    AudioCaptureService.Bridge.setCurrentDocument(updated)
+                }
+                android.widget.Toast.makeText(
+                    getApplication(),
+                    "파일명이 '${updated?.title}.txt'로 변경되었습니다.",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            } else {
+                android.widget.Toast.makeText(
+                    getApplication(),
+                    "이름 변경 실패: ${result.exceptionOrNull()?.message}",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+            onComplete(result)
         }
     }
 

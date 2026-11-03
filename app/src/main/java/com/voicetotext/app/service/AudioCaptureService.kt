@@ -90,6 +90,8 @@ class AudioCaptureService : Service() {
         when (intent?.action) {
             ACTION_START -> {
                 selectedLanguage = intent.getStringExtra(EXTRA_LANGUAGE) ?: AppLanguage.AUTO.code
+                val isAppend = intent.getBooleanExtra(EXTRA_IS_APPEND, false)
+                Bridge.setIsAppendMode(isAppend)
                 Bridge.setSelectedLanguage(AppLanguage.fromCode(selectedLanguage))
                 Bridge.setDetectedLanguage(null)
                 autoCandidateIndex = 0
@@ -246,7 +248,8 @@ class AudioCaptureService : Service() {
         }, null)
 
         Bridge.setCaptureState(CaptureState.RECORDING)
-        sessionStartTime = System.currentTimeMillis()
+        val initialOffset = if (Bridge.isAppendMode.value) (currentDocument?.durationSeconds ?: 0L) else 0L
+        sessionStartTime = System.currentTimeMillis() - (initialOffset * 1000L)
         startTimer()
 
         initAudioPipeline(mediaProjection)
@@ -840,6 +843,7 @@ class AudioCaptureService : Service() {
         const val EXTRA_RESULT_CODE = "com.voicetotext.app.extra.RESULT_CODE"
         const val EXTRA_RESULT_DATA = "com.voicetotext.app.extra.RESULT_DATA"
         const val EXTRA_LANGUAGE = "com.voicetotext.app.extra.LANGUAGE"
+        const val EXTRA_IS_APPEND = "com.voicetotext.app.extra.IS_APPEND"
 
         private const val CHANNEL_ID = "voice_to_text_channel"
         private const val NOTIFICATION_ID = 1001
@@ -853,6 +857,9 @@ class AudioCaptureService : Service() {
 
         private val _currentDocument = MutableStateFlow<DocumentEntity?>(null)
         val currentDocument: StateFlow<DocumentEntity?> = _currentDocument.asStateFlow()
+
+        private val _isAppendMode = MutableStateFlow(false)
+        val isAppendMode: StateFlow<Boolean> = _isAppendMode.asStateFlow()
 
         private val _captureState = MutableStateFlow(CaptureState.IDLE)
         val captureState: StateFlow<CaptureState> = _captureState.asStateFlow()
@@ -907,8 +914,13 @@ class AudioCaptureService : Service() {
             _waveform.value = values
         }
 
+        fun setIsAppendMode(value: Boolean) {
+            _isAppendMode.value = value
+        }
+
         fun reset() {
             _currentDocument.value = null
+            _isAppendMode.value = false
             _captureState.value = CaptureState.IDLE
             _detectedLanguage.value = null
             _elapsedTimeSeconds.value = 0L

@@ -26,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Search
@@ -64,6 +65,7 @@ import kotlinx.coroutines.launch
 import com.voicetotext.app.data.model.SyncStatus
 import com.voicetotext.app.ui.components.InAppTextViewerDialog
 import com.voicetotext.app.ui.components.LanguageBadge
+import com.voicetotext.app.ui.components.SaveAsDialog
 import com.voicetotext.app.ui.components.SyncStatusBadge
 import com.voicetotext.app.ui.components.formatFileSize
 import com.voicetotext.app.ui.theme.AppOutline
@@ -94,6 +96,7 @@ fun HistoryScreen(
     onFilterChange: (HistoryFilter) -> Unit,
     onDocumentClick: (DocumentEntity) -> Unit,
     onDeleteDocument: (String) -> Unit,
+    onRenameDocument: ((String, String) -> Unit)? = null,
     onSaveDocument: (DocumentEntity) -> Unit = {},
     onCancelSaveDocument: (DocumentEntity) -> Unit = {},
     onTranslateDocument: ((String, String, (Result<DocumentEntity>) -> Unit) -> Unit)? = null,
@@ -102,6 +105,7 @@ fun HistoryScreen(
     var inAppViewingDoc by remember { mutableStateOf<DocumentEntity?>(null) }
     var inAppViewingContent by remember { mutableStateOf("") }
     var docToDelete by remember { mutableStateOf<DocumentEntity?>(null) }
+    var docToRename by remember { mutableStateOf<DocumentEntity?>(null) }
 
     if (inAppViewingDoc != null) {
         InAppTextViewerDialog(
@@ -112,6 +116,20 @@ fun HistoryScreen(
                 onTranslateDocument?.invoke(inAppViewingDoc!!.id, targetLang, cb)
             },
             onDismiss = { inAppViewingDoc = null }
+        )
+    }
+
+    if (docToRename != null) {
+        val target = docToRename!!
+        SaveAsDialog(
+            title = "파일 이름 변경",
+            initialName = target.title,
+            confirmButtonText = "변경",
+            onConfirm = { newTitle ->
+                docToRename = null
+                onRenameDocument?.invoke(target.id, newTitle)
+            },
+            onDismiss = { docToRename = null }
         )
     }
 
@@ -189,6 +207,7 @@ fun HistoryScreen(
                     onFilterChange = onFilterChange,
                     onDocumentClick = onDocumentClick,
                     onOpenFile = openFileLambda,
+                    onRenameDocument = { docToRename = it },
                     onDeleteDocument = { docId ->
                         val doc = documents.find { it.id == docId }
                         if (doc != null) docToDelete = doc else onDeleteDocument(docId)
@@ -223,6 +242,7 @@ fun HistoryScreen(
             onFilterChange = onFilterChange,
             onDocumentClick = onDocumentClick,
             onOpenFile = openFileLambda,
+            onRenameDocument = { docToRename = it },
             onDeleteDocument = { docId ->
                 val doc = documents.find { it.id == docId }
                 if (doc != null) docToDelete = doc else onDeleteDocument(docId)
@@ -244,6 +264,7 @@ fun HistoryListContent(
     onFilterChange: (HistoryFilter) -> Unit,
     onDocumentClick: (DocumentEntity) -> Unit,
     onOpenFile: (DocumentEntity) -> Unit,
+    onRenameDocument: (DocumentEntity) -> Unit = {},
     onDeleteDocument: (String) -> Unit,
     onSaveDocument: (DocumentEntity) -> Unit = {},
     onCancelSaveDocument: (DocumentEntity) -> Unit = {},
@@ -366,6 +387,7 @@ fun HistoryListContent(
                         isSelected = isSelected,
                         onClick = { onDocumentClick(doc) },
                         onOpenFile = { onOpenFile(doc) },
+                        onRename = { onRenameDocument(doc) },
                         onDelete = { onDeleteDocument(doc.id) },
                         onSave = { onSaveDocument(doc) },
                         onCancelSave = { onCancelSaveDocument(doc) }
@@ -384,6 +406,7 @@ fun DocumentCard(
     isSelected: Boolean,
     onClick: () -> Unit,
     onOpenFile: () -> Unit,
+    onRename: () -> Unit = {},
     onDelete: () -> Unit,
     onSave: () -> Unit = {},
     onCancelSave: () -> Unit = {}
@@ -443,6 +466,9 @@ fun DocumentCard(
                     modifier = Modifier.weight(1f)
                 )
 
+                IconButton(onClick = onRename, modifier = Modifier.size(28.dp)) {
+                    Icon(Icons.Default.Edit, contentDescription = "이름 변경", tint = TextSecondary, modifier = Modifier.size(16.dp))
+                }
                 IconButton(onClick = onOpenFile, modifier = Modifier.size(28.dp)) {
                     Icon(Icons.Default.OpenInNew, contentDescription = "텍스트 보기", tint = Color(0xFF0284C7), modifier = Modifier.size(16.dp))
                 }

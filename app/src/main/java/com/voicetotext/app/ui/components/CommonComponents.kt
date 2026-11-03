@@ -198,6 +198,7 @@ fun LocalFileStrip(
     title: String,
     syncStatus: SyncStatus,
     languageCode: String? = null,
+    isAppendMode: Boolean = false,
     onOpenFileClick: (() -> Unit)? = null
 ) {
     val displayTitle = if (title.endsWith(".txt")) title else "$title.txt"
@@ -269,6 +270,25 @@ fun LocalFileStrip(
         }
 
         Spacer(modifier = Modifier.width(6.dp))
+
+        if (isAppendMode) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(StatusPausedContainer)
+                    .padding(horizontal = 8.dp, vertical = 3.5.dp)
+            ) {
+                Text(
+                    text = "🔄 이어 작성 중",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = OnStatusPaused,
+                    maxLines = 1,
+                    softWrap = false
+                )
+            }
+            Spacer(modifier = Modifier.width(6.dp))
+        }
 
         SyncStatusBadge(status = syncStatus)
 

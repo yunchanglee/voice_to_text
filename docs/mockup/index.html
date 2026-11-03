@@ -256,6 +256,36 @@
   .bilingual-card .s-txt{font-size:13.5px;color:var(--t1);line-height:1.55;margin-bottom:8px}
   .bilingual-card .t-txt{font-size:13.5px;color:#3730A3;background:#EEF2FF;border-radius:8px;padding:8px 10px;line-height:1.55}
 
+  /* Group F: File management & Append mode (v4.0) */
+  .dialog-input-box{display:flex;align-items:center;background:#F8FAFC;border:1.5px solid #CBD5E1;border-radius:12px;padding:0 12px;height:46px;margin:12px 0 8px;font-size:14px;color:var(--t1)}
+  .dialog-input-box.focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.15);background:#fff}
+  .dialog-input-box .input-txt{flex:1;font-weight:700;letter-spacing:-.2px;outline:none;border:none;background:transparent;color:var(--t1);font-size:13.5px}
+  .ext-tag{background:#E2E8F0;color:#475569;border-radius:6px;font-size:12px;font-weight:700;padding:3px 7px;flex:none}
+  .preset-bar{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 12px}
+  .preset-pill{font-size:11px;font-weight:700;color:var(--primary);background:var(--primary-c);border-radius:999px;padding:3px 10px;cursor:pointer}
+  .valid-hint{font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:4px;margin-bottom:14px}
+  .valid-hint.ok{color:#059669}
+  .valid-hint.err{color:#DC2626}
+  .b-append{background:var(--paused-c);color:#B45309;font-weight:700}
+  
+  /* Append bottom sheet */
+  .sheet-picker-list{display:flex;flex-direction:column;gap:10px;max-height:360px;overflow-y:auto;margin:10px 0 16px}
+  .picker-item{background:var(--surface);border:1.5px solid var(--outline);border-radius:14px;padding:12px 14px;display:flex;gap:12px;align-items:flex-start;cursor:pointer}
+  .picker-item.active{border-color:var(--primary);background:#F8FAFF;box-shadow:0 4px 12px rgba(37,99,235,.08)}
+  .picker-item .r-ic{margin-top:2px;color:var(--primary)}
+  .picker-item .r-ic.off{color:var(--t3)}
+  .picker-item .m{flex:1;min-width:0}
+  .picker-item .t{font-size:13.5px;font-weight:800;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .picker-item .p-meta{font-size:11px;color:var(--t2);margin:3px 0 6px;display:flex;gap:6px;align-items:center}
+  .picker-item .p-quote{font-size:12px;color:var(--t2);background:#F1F5F9;border-radius:6px;padding:5px 8px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+
+  /* Append mode live screen */
+  .prev-block{background:#F1F5F9;border-left:3px solid #94A3B8;border-radius:0 8px 8px 0;padding:8px 12px;margin-bottom:12px}
+  .prev-block .prev-tag{font-size:11px;font-weight:700;color:var(--t2);margin-bottom:4px;display:flex;align-items:center;gap:4px}
+  .prev-block .prev-txt{font-size:13px;line-height:1.55;color:#475569}
+  .append-divider{display:flex;align-items:center;gap:10px;margin:14px 0;font-size:11.5px;font-weight:800;color:#B45309}
+  .append-divider:before,.append-divider:after{content:"";flex:1;height:1px;background:#FCD34D}
+
   /* tokens */
   .tok{display:grid;grid-template-columns:repeat(4,200px);gap:14px}
   .sw{border-radius:14px;overflow:hidden;background:var(--surface);border:1px solid var(--outline)}
@@ -298,14 +328,20 @@
     <symbol id="wifi" viewBox="0 0 24 24"><path d="M2 8.5a15 15 0 0 1 20 0L12 21z" fill="currentColor" stroke="none"/></symbol>
     <symbol id="bat" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="19" rx="2" fill="currentColor" stroke="none"/><rect x="9" y="1" width="6" height="2" fill="currentColor" stroke="none"/></symbol>
     <symbol id="close" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+    <!-- v4.0 new icons -->
+    <symbol id="edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></symbol>
+    <symbol id="append" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></symbol>
+    <symbol id="more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></symbol>
+    <symbol id="radio-on" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4" fill="currentColor"/></symbol>
+    <symbol id="radio-off" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></symbol>
     <!-- status bar icons -->
     <symbol id="st-rec" viewBox="0 0 24 24"><rect x="8" y="2.5" width="8" height="12" rx="4" fill="currentColor"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M1.8 8.5v5M22.2 8.5v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
     <symbol id="st-pause" viewBox="0 0 24 24"><rect x="5" y="2.5" width="7" height="11" rx="3.5" fill="currentColor"/><path d="M2.5 10a6 6 0 0 0 10 4.4M8.5 16.5v4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><rect x="15" y="12" width="2.6" height="9" rx="1" fill="currentColor"/><rect x="19.4" y="12" width="2.6" height="9" rx="1" fill="currentColor"/></symbol>
   </defs>
 </svg>
 
-<h1 class="board">VoiceToText — 디자인 시안 v2.2 (다국어 STT · 인앱 뷰어 · 로컬 저장)</h1>
-<p class="board-sub">기기 내부 저장소(Documents/VoiceToText) 전용 · Material 3 반응형 · 2026-11-02 · 기획서 v2.2 기준</p>
+<h1 class="board">VoiceToText — 디자인 시안 v4.0 (다른 이름 저장 · 파일명 변경 · 기존 파일 이어쓰기)</h1>
+<p class="board-sub">기기 내부 저장소(Documents/VoiceToText) 전용 · Material 3 반응형 · 2026-11-03 · 기획서 v4.0 기준</p>
 
 <!-- ======================================================= -->
 <section class="group" id="g-flow">
@@ -987,6 +1023,289 @@
 </div>
 </section>
 
+<!-- ======================================================= -->
+<section class="group" id="g-filemanage">
+<h2><span class="tag">F</span>파일 관리 & 세션 이어쓰기 기능 (File Management & Append v4.0)</h2>
+<div class="row">
+
+  <!-- F1 Save As Modal on Completion Screen -->
+  <div class="shot">
+    <div class="cap">F-1 변환 완료 화면 · 다른 이름으로 저장 (Save As)<small>타임스탬프 기본 파일명을 원하는 제목으로 변경. OS 금지문자 실시간 차단, .txt 자동 접미, 60자 제한.</small></div>
+    <div class="phone">
+      <div class="sb"><div class="l num">09:18</div><div class="r"><svg class="i"><use href="#wifi"/></svg><svg class="i"><use href="#bat"/></svg></div></div>
+      <div class="appbar"><div class="logo"><svg class="i"><use href="#wavemic"/></svg></div><div class="title">VoiceToText</div><div class="iconbtn"><svg class="i"><use href="#folder"/></svg></div></div>
+      
+      <!-- Underneath completion view -->
+      <div style="flex:1;padding:12px 18px 0;opacity:.28;display:flex;flex-direction:column;align-items:center">
+        <div style="width:72px;height:72px;border-radius:50%;background:#D1FAE5;display:grid;place-items:center;color:#047857;margin-bottom:12px"><svg class="i" style="width:36px;height:36px"><use href="#check"/></svg></div>
+        <h3 style="font-size:18px;font-weight:800;margin-bottom:4px">기기 내 텍스트 파일로 저장했어요</h3>
+        <p style="font-size:12px;color:var(--t2);margin-bottom:14px">내 파일 › 문서 › VoiceToText · 🇰🇷 한국어</p>
+        <div class="card" style="width:100%;padding:14px;margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <b style="font-size:14px">VTT_261103_0917.txt</b>
+            <span class="badge b-synced">저장 완료</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--t2)">
+            <span>00:56 변환 시간</span><span>2개 문장</span><span>254 B 용량</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scrim & Save As Dialog -->
+      <div class="scrim"></div>
+      <div class="modal-dialog-wrap">
+        <div class="alert-box" style="width:320px;padding:22px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <div style="display:flex;align-items:center;gap:6px">
+              <svg class="i" style="color:var(--primary);width:20px;height:20px"><use href="#edit"/></svg>
+              <h5 style="font-size:16.5px;font-weight:800;margin:0">다른 이름으로 저장</h5>
+            </div>
+            <div class="iconbtn" style="width:28px;height:28px"><svg class="i" style="width:18px;height:18px"><use href="#close"/></svg></div>
+          </div>
+          <p style="font-size:12px;color:var(--t2);margin-bottom:12px">📁 저장 위치: Documents/VoiceToText</p>
+          
+          <!-- Input field with .txt tag -->
+          <div class="dialog-input-box focus" style="margin-bottom:10px">
+            <input class="input-txt" value="주간_전략기획_팀회의" />
+            <span class="ext-tag">.txt</span>
+          </div>
+
+          <!-- Valid feedback -->
+          <div class="valid-hint ok" style="margin-bottom:18px">
+            <svg class="i" style="width:14px;height:14px"><use href="#check"/></svg>
+            <span>사용할 수 있는 파일명입니다. (13/60자)</span>
+          </div>
+
+          <!-- Buttons -->
+          <div class="alert-btns">
+            <div class="abtn c" style="flex:1;text-align:center">취소</div>
+            <div class="abtn" style="flex:1.4;background:var(--primary);color:#fff;text-align:center">저장</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="navbar" style="background:var(--surface)"><i></i></div>
+    </div>
+  </div>
+
+  <!-- F2 Rename in History List & Document Detail -->
+  <div class="shot">
+    <div class="cap">F-2 변환 기록 · 파일 이름 변경 (Rename)<small>기록 목록의 더보기 메뉴(⋮) 또는 상세 헤더에서 즉시 수정. 연계 번역 파일명도 일괄 동기화.</small></div>
+    <div class="phone">
+      <div class="sb"><div class="l num">10:05</div><div class="r"><svg class="i"><use href="#wifi"/></svg><svg class="i"><use href="#bat"/></svg></div></div>
+      <div class="appbar"><div class="title">변환 기록</div><div class="iconbtn"><svg class="i"><use href="#folder"/></svg></div></div>
+      
+      <!-- Search bar -->
+      <div class="search-wrap" style="opacity:.3">
+        <svg class="i" style="width:16px;height:16px"><use href="#search"/></svg>
+        <span class="sin">변환 기록 검색...</span>
+      </div>
+
+      <!-- History list under scrim -->
+      <div class="list" style="opacity:.25">
+        <div class="daylb">오늘</div>
+        <div class="item">
+          <div class="txtdoc"><span>TXT</span></div>
+          <div class="m">
+            <div class="headrow">
+              <span class="t">VTT_261102_1747.txt</span>
+              <svg class="i" style="width:18px;height:18px;color:var(--t2)"><use href="#more"/></svg>
+            </div>
+            <div class="pv">크레이그는 바버라와 눈을 맞췄다 그는 윙크했다 그녀는 하지 않았다...</div>
+            <div class="flowchips">
+              <span class="f-pill sky">🇰🇷 한국어</span>
+              <span class="f-pill">01:04</span>
+              <span class="f-pill green">✓ 저장 완료</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scrim & Rename Dialog -->
+      <div class="scrim"></div>
+      <div class="modal-dialog-wrap">
+        <div class="alert-box" style="width:320px;padding:20px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+            <svg class="i" style="color:var(--primary);width:20px;height:20px"><use href="#edit"/></svg>
+            <h5 style="font-size:16.5px;font-weight:800;margin:0">파일 이름 변경</h5>
+          </div>
+          <p style="font-size:12px;color:var(--t2);margin-bottom:8px">기존: <span style="font-family:monospace;color:var(--t1)">VTT_261102_1747.txt</span></p>
+
+          <!-- Input field with .txt tag -->
+          <div class="dialog-input-box focus">
+            <input class="input-txt" value="2026_11월_프로덕트_전략기획" />
+            <span class="ext-tag">.txt</span>
+          </div>
+
+          <!-- Note regarding translations -->
+          <div style="background:#EEF2FF;border:1px solid #C7D2FE;border-radius:8px;padding:8px 10px;margin-bottom:14px;font-size:11.5px;color:#3730A3;line-height:1.45">
+            💡 연동된 번역 파일(<code>_trans_en.txt</code>)의 이름도 함께 일괄 변경됩니다.
+          </div>
+
+          <!-- Buttons -->
+          <div class="alert-btns">
+            <div class="abtn c" style="flex:1;text-align:center">취소</div>
+            <div class="abtn" style="flex:1.4;background:var(--primary);color:#fff;text-align:center">변경하기</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Nav -->
+      <div class="bnav"><a href="#"><span class="pill"><svg class="i"><use href="#mic"/></svg></span>실시간</a><a href="#" class="on"><span class="pill"><svg class="i"><use href="#history"/></svg></span>변환 기록</a></div>
+      <div class="navbar" style="background:var(--surface)"><i></i></div>
+    </div>
+  </div>
+
+  <!-- F3 Append Document Picker BottomSheet -->
+  <div class="shot">
+    <div class="cap">F-3 이어서 작성할 기존 파일 선택 (Append Picker)<small>대기 화면 [기존 파일에 이어서 작성] 클릭 시 오픈. 검색, 마지막 문장 미리보기, 원터치 세션 시작.</small></div>
+    <div class="phone">
+      <div class="sb"><div class="l num">12:10</div><div class="r"><svg class="i"><use href="#wifi"/></svg><svg class="i"><use href="#bat"/></svg></div></div>
+      <div class="appbar"><div class="logo"><svg class="i"><use href="#wavemic"/></svg></div><div class="title">VoiceToText</div><div class="iconbtn"><svg class="i"><use href="#folder"/></svg></div></div>
+      
+      <!-- Background Idle View -->
+      <div class="idle" style="opacity:.25;padding:0 24px">
+        <div class="hero"><div class="core"><svg class="i"><use href="#mic"/></svg></div></div>
+        <h3 style="font-size:18px">재생 중인 소리를 텍스트로</h3>
+      </div>
+
+      <!-- Scrim & Slide-Up BottomSheet -->
+      <div class="scrim"></div>
+      <div class="sheet" style="padding:10px 18px 16px;max-height:680px">
+        <div class="grab"></div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+          <svg class="i" style="color:#B45309;width:20px;height:20px"><use href="#append"/></svg>
+          <h4 style="font-size:17px;font-weight:800;margin:0">이어서 작성할 파일 선택</h4>
+        </div>
+        <div class="sub" style="margin-bottom:10px;font-size:12px">선택한 파일의 끝에 새로운 녹음 내용을 덧붙여 누적 저장합니다.</div>
+
+        <!-- Search bar inside sheet -->
+        <div class="search-wrap" style="margin:0 0 10px;height:40px;background:#F1F5F9">
+          <svg class="i" style="width:15px;height:15px"><use href="#search"/></svg>
+          <span class="sin" style="font-size:13px">파일명 또는 본문 내용 검색...</span>
+        </div>
+
+        <!-- Document Picker List -->
+        <div class="sheet-picker-list">
+          <!-- Selected item -->
+          <div class="picker-item active">
+            <svg class="i r-ic" style="width:18px;height:18px"><use href="#radio-on"/></svg>
+            <div class="m">
+              <div class="t">주간_전략기획_팀회의.txt</div>
+              <div class="p-meta">
+                <span>오늘 09:17</span><span>·</span><span>12개 문단</span><span>·</span><span>03:45 녹음됨</span>
+              </div>
+              <div class="p-quote">"다들 이리저리 굴려 방향을 바꿔 벽에 대며 인식시키려 했었다..."</div>
+            </div>
+          </div>
+
+          <!-- Unselected item 1 -->
+          <div class="picker-item">
+            <svg class="i r-ic off" style="width:18px;height:18px"><use href="#radio-off"/></svg>
+            <div class="m">
+              <div class="t">VTT_261102_2208.txt</div>
+              <div class="p-meta">
+                <span>11.02 22:08</span><span>·</span><span>5개 문단</span><span>·</span><span>01:20 녹음됨</span>
+              </div>
+              <div class="p-quote">"키가 195cm가 넘는 대형 트럭 운전기사인 남편은..."</div>
+            </div>
+          </div>
+
+          <!-- Unselected item 2 -->
+          <div class="picker-item">
+            <svg class="i r-ic off" style="width:18px;height:18px"><use href="#radio-off"/></svg>
+            <div class="m">
+              <div class="t">2026_11월_프로덕트_전략기획.txt</div>
+              <div class="p-meta">
+                <span>11.02 17:47</span><span>·</span><span>8개 문단</span><span>·</span><span>02:15 녹음됨</span>
+              </div>
+              <div class="p-quote">"크레이그는 바버라와 눈을 맞췄다 그는 윙크했다..."</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <div class="btn btn-primary" style="height:50px;border-radius:16px;font-size:15px;margin-bottom:6px">
+          <svg class="i"><use href="#mic"/></svg>이 파일에 이어서 녹음 시작
+        </div>
+        <div style="text-align:center;font-size:11px;color:var(--t3)">안전지대: 하단 제스처 바 패딩 적용됨</div>
+      </div>
+
+      <div class="navbar" style="background:var(--surface)"><i></i></div>
+    </div>
+  </div>
+
+  <!-- F4 Live Screen in Append Mode -->
+  <div class="shot">
+    <div class="cap">F-4 실시간 변환 · 기존 파일 이어쓰기 진행 중<small>[이어 작성 중] 앰버 배지, 구분선 없이 이전 문맥에서 자연스럽게 실시간 텍스트 누적.</small></div>
+    <div class="phone">
+      <div class="sb"><div class="l num">12:15 <svg class="i"><use href="#st-rec"/></svg></div><div class="r"><span class="sys-chip">●</span><svg class="i"><use href="#wifi"/></svg><svg class="i"><use href="#bat"/></svg></div></div>
+      <div class="appbar">
+        <div class="logo"><svg class="i"><use href="#wavemic"/></svg></div>
+        <div class="title">VoiceToText</div>
+        <span class="badge b-live"><span class="dot blink"></span>LIVE</span>
+      </div>
+
+      <!-- Append Header Strip -->
+      <div class="doc" style="margin-bottom:8px">
+        <div class="txtdoc"><span>TXT</span></div>
+        <div class="m">
+          <div class="t">주간_전략기획_팀회의.txt</div>
+          <div class="p"><svg class="i"><use href="#folder"/></svg>내 파일 › 문서 › VoiceToText</div>
+        </div>
+        <span class="badge b-append"><svg class="i" style="width:12px;height:12px"><use href="#append"/></svg>이어 작성 중</span>
+      </div>
+
+      <!-- Language Chip Bar -->
+      <div class="langbar" style="padding-bottom:6px">
+        <div class="lchip">🌐 자동 감지</div>
+        <div class="lchip on">🇰🇷 한국어</div>
+        <div class="lchip">🇺🇸 English</div>
+        <div class="lchip">🇯🇵 日本語</div>
+      </div>
+
+      <!-- Transcript Area -->
+      <div class="script">
+        <!-- Previous recorded content (flowing naturally) -->
+        <div class="seg">
+          <div class="ts">00:49</div>
+          <div class="txt">다들 이리저리 굴려 방향을 바꿔 벽에 대며 인식시키려 했었다 어느 순간 쇠 긁히는 소리가 나면서 내빔이 당기는 대로 철문이 열렸다 기다려 봐 위층도 열리는지 보고게.</div>
+        </div>
+
+        <!-- New live sentences continuing naturally without divider -->
+        <div class="seg">
+          <div class="ts">03:46</div>
+          <div class="txt">이어서 논의할 두 번째 안건은 하반기 모바일 배포 일정입니다.</div>
+        </div>
+
+        <div class="seg interim">
+          <div class="ts">03:52</div>
+          <div class="txt">다음 주 수요일까지 QA 검증을 완료하고 금요일 오전에 구글 플레이 배포를 진행하겠습니다<span class="caret"></span></div>
+        </div>
+      </div>
+
+      <!-- Control Dock -->
+      <div class="dock">
+        <div class="meter">
+          <div class="wave" id="w5"></div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end">
+            <div class="timer num" style="font-size:22px">04:12</div>
+            <div style="font-size:10.5px;color:var(--t2);font-weight:700">이전 03:45 + 신규 00:27</div>
+          </div>
+        </div>
+        <div class="btns">
+          <div class="btn btn-tonal"><svg class="i f"><use href="#pause"/></svg>일시중지</div>
+          <div class="btn btn-danger"><svg class="i f"><use href="#stop"/></svg>종료</div>
+        </div>
+      </div>
+
+      <div class="navbar" style="background:var(--surface)"><i></i></div>
+    </div>
+  </div>
+
+</div>
+</section>
+
 <script>
   function wave(id, n, seed, amp){
     const el=document.getElementById(id); if(!el) return;
@@ -998,7 +1317,7 @@
       const b=document.createElement('i'); b.style.height=h+'px'; el.appendChild(b);
     }
   }
-  wave('w1',36,7,34); wave('w2',36,3,6); wave('w3',30,11,28); wave('w4',36,13,30);
+  wave('w1',36,7,34); wave('w2',36,3,6); wave('w3',30,11,28); wave('w4',36,13,30); wave('w5',36,17,32);
   const g=new URLSearchParams(location.search).get('g');
   if(g){document.querySelectorAll('section.group').forEach(s=>{if(s.id!==g)s.style.display='none'});
         document.querySelector('h1.board').style.display='none';document.querySelector('.board-sub').style.display='none';}

@@ -20,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
+import com.voicetotext.app.data.local.DocumentEntity
 import com.voicetotext.app.ui.screens.MainScreen
 import com.voicetotext.app.ui.screens.OnboardingDialog
 import com.voicetotext.app.ui.theme.VoiceToTextTheme
@@ -34,6 +35,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private var orientationChangedForProjection = false
+    private var pendingAppendDoc: DocumentEntity? = null
 
     // MediaProjection 화면/오디오 캡처 승인 런처
     private val mediaProjectionLauncher = registerForActivityResult(
@@ -44,8 +46,15 @@ class MainActivity : ComponentActivity() {
             requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
-            viewModel.startSession(result.resultCode, result.data!!)
+            val appendDoc = pendingAppendDoc
+            if (appendDoc != null) {
+                viewModel.startAppendSession(appendDoc, result.resultCode, result.data!!)
+                pendingAppendDoc = null
+            } else {
+                viewModel.startSession(result.resultCode, result.data!!)
+            }
         } else {
+            pendingAppendDoc = null
             Toast.makeText(this, "오디오 캡처가 취소되었습니다.", Toast.LENGTH_SHORT).show()
         }
     }
@@ -78,7 +87,7 @@ class MainActivity : ComponentActivity() {
 
                 MainScreen(
                     viewModel = viewModel,
-                    onRequestMediaProjection = { checkAndStartMediaProjection() }
+                    onRequestMediaProjection = { targetDoc -> checkAndStartMediaProjection(targetDoc) }
                 )
             }
         }
@@ -100,7 +109,8 @@ class MainActivity : ComponentActivity() {
         permissionLauncher.launch(list.toTypedArray())
     }
 
-    private fun checkAndStartMediaProjection() {
+    private fun checkAndStartMediaProjection(targetDoc: DocumentEntity? = null) {
+        pendingAppendDoc = targetDoc
         if (!hasRequiredPermissions()) {
             requestRequiredPermissions()
             return

@@ -44,6 +44,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.OpenInNew
@@ -54,6 +56,7 @@ import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -83,6 +86,7 @@ import com.voicetotext.app.ui.components.LanguageBadge
 import com.voicetotext.app.ui.components.LiveBadge
 import com.voicetotext.app.ui.components.LocalFileStrip
 import com.voicetotext.app.ui.components.PausedBadge
+import com.voicetotext.app.ui.components.SaveAsDialog
 import com.voicetotext.app.ui.components.WaveformVisualizer
 import com.voicetotext.app.ui.components.formatFileSize
 import com.voicetotext.app.ui.theme.AppOutline
@@ -113,12 +117,15 @@ fun LiveTranscribeScreen(
     selectedLanguage: AppLanguage,
     detectedLanguage: AppLanguage? = null,
     isLandscape: Boolean,
+    isAppendMode: Boolean = false,
     onSelectLanguage: (AppLanguage) -> Unit,
     onStartClick: () -> Unit,
+    onAppendClick: () -> Unit = {},
     onPauseClick: () -> Unit,
     onResumeClick: () -> Unit,
     onStopClick: () -> Unit,
     onResetClick: () -> Unit,
+    onRenameDocument: ((String, String) -> Unit)? = null,
     onTranslateDocument: ((String, String, (Result<DocumentEntity>) -> Unit) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
@@ -152,6 +159,7 @@ fun LiveTranscribeScreen(
                 inAppViewingDoc = doc ?: currentDocument
                 inAppViewingContent = content
             },
+            onRenameDocument = onRenameDocument,
             onNewSession = onResetClick
         )
         return
@@ -163,6 +171,7 @@ fun LiveTranscribeScreen(
             selectedLanguage = selectedLanguage,
             onSelectLanguage = onSelectLanguage,
             onStartClick = onStartClick,
+            onAppendClick = onAppendClick,
             recentDocument = currentDocument,
             onOpenRecentFile = { doc ->
                 val file = doc.localFilePath?.let { File(it) }
@@ -188,6 +197,7 @@ fun LiveTranscribeScreen(
             transcripts = transcripts,
             selectedLanguage = selectedLanguage,
             detectedLanguage = detectedLanguage,
+            isAppendMode = isAppendMode,
             onSelectLanguage = onSelectLanguage,
             onPauseClick = onPauseClick,
             onResumeClick = onResumeClick,
@@ -215,6 +225,7 @@ fun LiveTranscribeScreen(
             transcripts = transcripts,
             selectedLanguage = selectedLanguage,
             detectedLanguage = detectedLanguage,
+            isAppendMode = isAppendMode,
             onSelectLanguage = onSelectLanguage,
             onPauseClick = onPauseClick,
             onResumeClick = onResumeClick,
@@ -245,6 +256,7 @@ fun PortraitTranscribeView(
     transcripts: List<TranscriptEntity>,
     selectedLanguage: AppLanguage,
     detectedLanguage: AppLanguage? = null,
+    isAppendMode: Boolean = false,
     onSelectLanguage: (AppLanguage) -> Unit,
     onPauseClick: () -> Unit,
     onResumeClick: () -> Unit,
@@ -281,6 +293,7 @@ fun PortraitTranscribeView(
                 title = currentDocument?.title ?: "VTT_새_문서",
                 syncStatus = currentDocument?.syncStatus ?: SyncStatus.SYNCING,
                 languageCode = currentDocument?.language,
+                isAppendMode = isAppendMode,
                 onOpenFileClick = onOpenFile
             )
         }
@@ -444,6 +457,7 @@ fun LandscapeTranscribeView(
     transcripts: List<TranscriptEntity>,
     selectedLanguage: AppLanguage,
     detectedLanguage: AppLanguage? = null,
+    isAppendMode: Boolean = false,
     onSelectLanguage: (AppLanguage) -> Unit,
     onPauseClick: () -> Unit,
     onResumeClick: () -> Unit,
@@ -510,6 +524,7 @@ fun LandscapeTranscribeView(
                     title = currentDocument?.title ?: "VTT_새_문서",
                     syncStatus = currentDocument?.syncStatus ?: SyncStatus.SYNCING,
                     languageCode = currentDocument?.language,
+                    isAppendMode = isAppendMode,
                     onOpenFileClick = onOpenFile
                 )
 
@@ -886,6 +901,7 @@ fun IdleView(
     selectedLanguage: AppLanguage,
     onSelectLanguage: (AppLanguage) -> Unit,
     onStartClick: () -> Unit,
+    onAppendClick: () -> Unit = {},
     recentDocument: DocumentEntity?,
     onOpenRecentFile: (DocumentEntity) -> Unit = {}
 ) {
@@ -1067,6 +1083,22 @@ fun IdleView(
 
                 Spacer(modifier = Modifier.height(6.dp))
 
+                OutlinedButton(
+                    onClick = onAppendClick,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = PrimaryBlue),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryBlue),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(42.dp)
+                ) {
+                    Icon(Icons.Default.Description, contentDescription = null, tint = PrimaryBlue, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("기존 파일에 이어서 작성", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = PrimaryBlue)
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
                 Text(
                     text = "📁 내 파일 › 문서 › VoiceToText 에 저장",
                     fontSize = 10.5.sp,
@@ -1244,6 +1276,22 @@ fun IdleView(
 
         Spacer(modifier = Modifier.height(10.dp))
 
+        OutlinedButton(
+            onClick = onAppendClick,
+            shape = RoundedCornerShape(18.dp),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = PrimaryBlue),
+            border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryBlue),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+        ) {
+            Icon(Icons.Default.Description, contentDescription = null, tint = PrimaryBlue, modifier = Modifier.size(18.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("기존 파일에 이어서 작성", fontSize = 14.5.sp, fontWeight = FontWeight.Bold, color = PrimaryBlue)
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
         Text(
             text = "📁 내 파일 › 문서 › VoiceToText 에 저장",
             fontSize = 11.5.sp,
@@ -1260,9 +1308,11 @@ fun CompletedView(
     transcripts: List<TranscriptEntity>,
     elapsedSeconds: Long,
     onOpenFileInApp: (DocumentEntity?, String) -> Unit,
+    onRenameDocument: ((String, String) -> Unit)? = null,
     onNewSession: () -> Unit
 ) {
     val context = LocalContext.current
+    var showSaveAsDialog by remember { mutableStateOf(false) }
     val displayTitle = if (document?.title?.endsWith(".txt") == true) document.title else "${document?.title ?: "VTT_문서"}.txt"
 
     val fullText = remember(document, transcripts) {
@@ -1341,16 +1391,31 @@ fun CompletedView(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = displayTitle,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
                     color = TextPrimary,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
+                if (document != null && onRenameDocument != null) {
+                    IconButton(
+                        onClick = { showSaveAsDialog = true },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "다른 이름으로 저장",
+                            tint = PrimaryBlue,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(4.dp))
+                }
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
@@ -1442,6 +1507,19 @@ fun CompletedView(
         }
 
         Spacer(modifier = Modifier.height(18.dp))
+    }
+
+    if (showSaveAsDialog && document != null) {
+        SaveAsDialog(
+            title = "다른 이름으로 저장",
+            initialName = document.title,
+            confirmButtonText = "저장",
+            onConfirm = { newTitle ->
+                showSaveAsDialog = false
+                onRenameDocument?.invoke(document.id, newTitle)
+            },
+            onDismiss = { showSaveAsDialog = false }
+        )
     }
 }
 

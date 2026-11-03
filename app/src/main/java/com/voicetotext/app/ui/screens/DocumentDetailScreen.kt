@@ -29,7 +29,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
@@ -61,6 +63,7 @@ import com.voicetotext.app.data.local.DocumentEntity
 import com.voicetotext.app.data.local.TranscriptEntity
 import com.voicetotext.app.ui.components.InAppTextViewerDialog
 import com.voicetotext.app.ui.components.LanguageBadge
+import com.voicetotext.app.ui.components.SaveAsDialog
 import com.voicetotext.app.ui.components.SyncStatusBadge
 import com.voicetotext.app.ui.components.formatFileSize
 import com.voicetotext.app.ui.theme.AppOutline
@@ -82,6 +85,8 @@ fun DocumentDetailScreen(
     transcripts: List<TranscriptEntity>,
     onBackClick: () -> Unit,
     onDeleteClick: () -> Unit,
+    onRenameDocument: ((String, String) -> Unit)? = null,
+    onAppendToDocument: ((DocumentEntity) -> Unit)? = null,
     onTranslateDocument: ((String, String, (Result<DocumentEntity>) -> Unit) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
@@ -91,6 +96,20 @@ fun DocumentDetailScreen(
 
     val displayTitle = if (doc.title.endsWith(".txt")) doc.title else "${doc.title}.txt"
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
+
+    if (showRenameDialog) {
+        SaveAsDialog(
+            title = "파일 이름 변경",
+            initialName = doc.title,
+            confirmButtonText = "변경",
+            onConfirm = { newTitle ->
+                showRenameDialog = false
+                onRenameDocument?.invoke(doc.id, newTitle)
+            },
+            onDismiss = { showRenameDialog = false }
+        )
+    }
 
     if (showDeleteConfirmDialog) {
         AlertDialog(
@@ -146,6 +165,9 @@ fun DocumentDetailScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { showRenameDialog = true }) {
+                        Icon(Icons.Default.Edit, contentDescription = "이름 변경", tint = TextSecondary)
+                    }
                     IconButton(onClick = { showDeleteConfirmDialog = true }) {
                         Icon(Icons.Default.Delete, contentDescription = "삭제", tint = TextMuted)
                     }
@@ -157,6 +179,7 @@ fun DocumentDetailScreen(
         DocumentDetailContent(
             doc = doc,
             transcripts = transcripts,
+            onAppendToDocument = onAppendToDocument,
             onTranslateDocument = onTranslateDocument,
             modifier = Modifier.padding(padding)
         )
@@ -169,6 +192,7 @@ fun DocumentDetailContent(
     doc: DocumentEntity,
     transcripts: List<TranscriptEntity>,
     onOpenFile: (() -> Unit)? = null,
+    onAppendToDocument: ((DocumentEntity) -> Unit)? = null,
     onTranslateDocument: ((String, String, (Result<DocumentEntity>) -> Unit) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
@@ -320,6 +344,20 @@ fun DocumentDetailContent(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
+            if (onAppendToDocument != null) {
+                Button(
+                    onClick = { onAppendToDocument(doc) },
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                    shape = RoundedCornerShape(10.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                    modifier = Modifier.height(36.dp)
+                ) {
+                    Icon(Icons.Default.Mic, contentDescription = null, modifier = Modifier.size(15.dp), tint = Color.White)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("이어서 작성", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1, softWrap = false)
+                }
+            }
+
             Button(
                 onClick = {
                     if (onOpenFile != null) onOpenFile() else showInAppViewer = true

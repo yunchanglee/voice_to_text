@@ -58,7 +58,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.voicetotext.app.data.local.DocumentEntity
 import com.voicetotext.app.data.model.CaptureState
+import com.voicetotext.app.ui.components.AppendDocumentPickerSheet
 import com.voicetotext.app.ui.components.LiveBadge
 import com.voicetotext.app.ui.components.PausedBadge
 import com.voicetotext.app.ui.theme.AppSurface
@@ -74,7 +76,7 @@ import com.voicetotext.app.ui.viewmodel.MainViewModel
 @Composable
 fun MainScreen(
     viewModel: MainViewModel,
-    onRequestMediaProjection: () -> Unit
+    onRequestMediaProjection: (DocumentEntity?) -> Unit
 ) {
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -83,8 +85,12 @@ fun MainScreen(
     var showStorageSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
 
+    var showAppendPickerSheet by remember { mutableStateOf(false) }
+    val appendSheetState = rememberModalBottomSheetState()
+
     val captureState by viewModel.captureState.collectAsState()
     val currentDocument by viewModel.currentDocument.collectAsState()
+    val isAppendMode by viewModel.isAppendMode.collectAsState()
     val elapsedTimeSeconds by viewModel.elapsedTimeSeconds.collectAsState()
     val interimText by viewModel.interimText.collectAsState()
     val waveform by viewModel.waveform.collectAsState()
@@ -114,7 +120,10 @@ fun MainScreen(
             isLandscape && selectedDetailDoc != null -> {
                 viewModel.selectDocumentForDetail(null)
             }
-            // 3. 저장소 바텀시트 -> 닫기
+            // 3. 바텀시트 -> 닫기
+            showAppendPickerSheet -> {
+                showAppendPickerSheet = false
+            }
             showStorageSheet -> {
                 showStorageSheet = false
             }
@@ -155,6 +164,8 @@ fun MainScreen(
             transcripts = detailTranscripts,
             onBackClick = { viewModel.selectDocumentForDetail(null) },
             onDeleteClick = { viewModel.deleteDocument(selectedDetailDoc!!.id) },
+            onRenameDocument = { docId, newTitle -> viewModel.renameDocument(docId, newTitle) },
+            onAppendToDocument = { doc -> onRequestMediaProjection(doc) },
             onTranslateDocument = { docId, targetLang, cb -> viewModel.translateDocument(docId, targetLang, cb) }
         )
         return
@@ -245,12 +256,15 @@ fun MainScreen(
                         selectedLanguage = selectedLanguage,
                         detectedLanguage = detectedLanguage,
                         isLandscape = true,
+                        isAppendMode = isAppendMode,
                         onSelectLanguage = { viewModel.selectLanguage(it) },
-                        onStartClick = onRequestMediaProjection,
+                        onStartClick = { onRequestMediaProjection(null) },
+                        onAppendClick = { showAppendPickerSheet = true },
                         onPauseClick = { viewModel.pauseSession() },
                         onResumeClick = { viewModel.resumeSession() },
                         onStopClick = { viewModel.stopSession() },
                         onResetClick = { viewModel.resetToIdle() },
+                        onRenameDocument = { docId, newTitle -> viewModel.renameDocument(docId, newTitle) },
                         onTranslateDocument = { docId, targetLang, cb -> viewModel.translateDocument(docId, targetLang, cb) }
                     )
                 } else {
@@ -265,6 +279,7 @@ fun MainScreen(
                         onFilterChange = { viewModel.setFilter(it) },
                         onDocumentClick = { viewModel.selectDocumentForDetail(it) },
                         onDeleteDocument = { viewModel.deleteDocument(it) },
+                        onRenameDocument = { docId, newTitle -> viewModel.renameDocument(docId, newTitle) },
                         onSaveDocument = { viewModel.finalizeDocument(it) },
                         onCancelSaveDocument = { viewModel.cancelDocumentSave(it) },
                         onTranslateDocument = { docId, targetLang, cb -> viewModel.translateDocument(docId, targetLang, cb) }
@@ -369,12 +384,15 @@ fun MainScreen(
                         selectedLanguage = selectedLanguage,
                         detectedLanguage = detectedLanguage,
                         isLandscape = false,
+                        isAppendMode = isAppendMode,
                         onSelectLanguage = { viewModel.selectLanguage(it) },
-                        onStartClick = onRequestMediaProjection,
+                        onStartClick = { onRequestMediaProjection(null) },
+                        onAppendClick = { showAppendPickerSheet = true },
                         onPauseClick = { viewModel.pauseSession() },
                         onResumeClick = { viewModel.resumeSession() },
                         onStopClick = { viewModel.stopSession() },
                         onResetClick = { viewModel.resetToIdle() },
+                        onRenameDocument = { docId, newTitle -> viewModel.renameDocument(docId, newTitle) },
                         onTranslateDocument = { docId, targetLang, cb -> viewModel.translateDocument(docId, targetLang, cb) }
                     )
                 } else {
@@ -389,6 +407,7 @@ fun MainScreen(
                         onFilterChange = { viewModel.setFilter(it) },
                         onDocumentClick = { viewModel.selectDocumentForDetail(it) },
                         onDeleteDocument = { viewModel.deleteDocument(it) },
+                        onRenameDocument = { docId, newTitle -> viewModel.renameDocument(docId, newTitle) },
                         onSaveDocument = { viewModel.finalizeDocument(it) },
                         onCancelSaveDocument = { viewModel.cancelDocumentSave(it) },
                         onTranslateDocument = { docId, targetLang, cb -> viewModel.translateDocument(docId, targetLang, cb) }
@@ -396,6 +415,18 @@ fun MainScreen(
                 }
             }
         }
+    }
+
+    if (showAppendPickerSheet) {
+        AppendDocumentPickerSheet(
+            sheetState = appendSheetState,
+            documents = historyDocuments,
+            onSelectDocument = { doc ->
+                showAppendPickerSheet = false
+                onRequestMediaProjection(doc)
+            },
+            onDismissRequest = { showAppendPickerSheet = false }
+        )
     }
 
     if (showStorageSheet) {
